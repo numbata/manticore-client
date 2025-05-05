@@ -1,0 +1,4 @@
+/lib/manticore/client.rb
+/lib/manticore/client/version.rb
+manticore/client.gemspec
+.rubocop.yml
