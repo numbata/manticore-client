@@ -66,7 +66,11 @@ end
 client = Manticore::Client::IndexApi.new
 
 # Example: bulk operations
-body = { /* your bulk payload */ }
+body = <<~NDJSON
+  { "insert": { "index": "table_name", "id": 3, "doc": { "title": "New movie", "rating": 8.5 } } }
+  { "delete": { "index": "table_name", "id": 2 } }
+NDJSON
+
 begin
   response = client.bulk(body)
   puts response
