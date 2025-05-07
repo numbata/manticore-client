@@ -13,6 +13,12 @@ jobs:
       contents: read
       packages: write
 
+    services:
+      manticoresearch:
+        image: manticoresearch/manticore:9.3.2
+        ports:
+          - 9308:9308
+
     steps:
     - uses: actions/checkout@v4
 
