@@ -16,13 +16,10 @@ RSpec.describe 'IndexApi' do
   end
 
   after do
-    ManticoreSqlHelper.query("DROP TABLE #{table_name}")
+    ManticoreSqlHelper.drop_table(table_name)
   end
 
   # Sends multiple operations like inserts, updates, replaces, or deletes.
-  # For each operation, the object must have the same format as in their dedicated method.
-  # The method expects a raw string as the batch in NDJSON (newline-delimited JSON).
-  # Each operation object needs to be serialized to JSON and separated by a newline (\n).
   describe "#bulk" do
     it "creates batch of documents" do
       request_body = <<~NDJSON
@@ -48,8 +45,7 @@ RSpec.describe 'IndexApi' do
     end
   end
 
-  # Delete a document in a table
-  # Delete one or several documents
+  # Delete one or several documents.
   describe '#delete' do
     it "removes one doc from table" do
       request = Manticore::Client::DeleteDocumentRequest.new(
@@ -92,7 +88,7 @@ RSpec.describe 'IndexApi' do
     end
   end
 
-  # Create a new document in a table
+  # Insert a new document in a table.
   describe '#insert' do
     it 'inserts a new document' do
       request = Manticore::Client::InsertDocumentRequest.new(
@@ -116,7 +112,7 @@ RSpec.describe 'IndexApi' do
     end
   end
 
-  # Partially replaces a document in a table
+  # Partially replaces a document in a table.
   describe '#partial_replace' do
     it 'partially updates a document' do
       request = Manticore::Client::ReplaceDocumentRequest.new(
@@ -158,7 +154,7 @@ RSpec.describe 'IndexApi' do
     end
   end
 
-  # Update a document in a table (by id)
+  # Update a document in a table (by id).
   describe '#update' do
     it 'updates a document by id' do
       request = Manticore::Client::UpdateDocumentRequest.new(

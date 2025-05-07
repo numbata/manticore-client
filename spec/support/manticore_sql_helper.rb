@@ -14,7 +14,8 @@ module ManticoreSqlHelper
   end
 
   def self.query(sql)
-    response = client.sql("query=#{sql}", query_params: {mode: "raw"}).first
+    sql_encoded = URI.encode_www_form_component(sql)
+    response = client.sql("query=#{sql_encoded}", query_params: {mode: "raw"}).first
     raise QueryError.new(response[:error], sql) unless response[:error].empty?
 
     response[:data]

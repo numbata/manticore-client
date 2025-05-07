@@ -34,7 +34,6 @@ end
 
 RSpec.configure do |config|
   config.before(:suite) do
-    puts "Using Manticore test index prefix: #{TABLE_PREFIX.inspect}"
     ManticoreSqlHelper.tables(prefix: TABLE_PREFIX).each do |table|
       ManticoreSqlHelper.drop_table(table)
     end
