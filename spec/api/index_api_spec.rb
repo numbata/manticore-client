@@ -1,9 +1,10 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
+require "spec_helper"
 
-RSpec.describe 'IndexApi' do
+RSpec.describe "IndexApi" do
   subject(:index_api) { Manticore::Client::IndexApi.new }
+
   let(:table_name) { "#{TABLE_PREFIX}movies" }
 
   before do
@@ -37,7 +38,7 @@ RSpec.describe 'IndexApi' do
       )
       expect(table_name).to have_docs(
         { id: 1, title: "Scary movie", rating: 9.5 },
-        { id: 3, title: "New movie", rating: 8.5 },
+        { id: 3, title: "New movie", rating: 8.5 }
       )
       expect(table_name).not_to have_docs(
         { id: 2, title: "Horror movie", rating: 2.1 }
@@ -46,7 +47,7 @@ RSpec.describe 'IndexApi' do
   end
 
   # Delete one or several documents.
-  describe '#delete' do
+  describe "#delete" do
     it "removes one doc from table" do
       request = Manticore::Client::DeleteDocumentRequest.new(
         table: table_name,
@@ -58,7 +59,7 @@ RSpec.describe 'IndexApi' do
       expect(result).to be_a(Manticore::Client::DeleteResponse)
       expect(result).to have_attributes(
         table: table_name,
-        result: "deleted",
+        result: "deleted"
       )
       expect(table_name).to have_docs(
         { id: 1, title: "Scary movie", rating: 9.5 }
@@ -79,7 +80,7 @@ RSpec.describe 'IndexApi' do
       expect(result).to be_a(Manticore::Client::DeleteResponse)
       expect(result).to have_attributes(
         table: table_name,
-        result: "deleted",
+        result: "deleted"
       )
       expect(table_name).not_to have_docs(
         { id: 1, title: "Scary movie", rating: 9.5 },
@@ -89,8 +90,8 @@ RSpec.describe 'IndexApi' do
   end
 
   # Insert a new document in a table.
-  describe '#insert' do
-    it 'inserts a new document' do
+  describe "#insert" do
+    it "inserts a new document" do
       request = Manticore::Client::InsertDocumentRequest.new(
         table: table_name,
         id: 3,
@@ -113,8 +114,8 @@ RSpec.describe 'IndexApi' do
   end
 
   # Partially replaces a document in a table.
-  describe '#partial_replace' do
-    it 'partially updates a document' do
+  describe "#partial_replace" do
+    it "partially updates a document" do
       request = Manticore::Client::ReplaceDocumentRequest.new(
         doc: { rating: 8.8 }
       )
@@ -131,8 +132,8 @@ RSpec.describe 'IndexApi' do
   end
 
   # Replace a document in a table (full replace)
-  describe '#replace' do
-    it 'fully replaces a document' do
+  describe "#replace" do
+    it "fully replaces a document" do
       request = Manticore::Client::InsertDocumentRequest.new(
         table: table_name,
         id: 1,
@@ -155,8 +156,8 @@ RSpec.describe 'IndexApi' do
   end
 
   # Update a document in a table (by id).
-  describe '#update' do
-    it 'updates a document by id' do
+  describe "#update" do
+    it "updates a document by id" do
       request = Manticore::Client::UpdateDocumentRequest.new(
         table: table_name,
         id: 1,

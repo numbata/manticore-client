@@ -15,16 +15,16 @@ module ManticoreSqlHelper
 
   def self.query(sql)
     sql_encoded = URI.encode_www_form_component(sql)
-    response = client.sql("query=#{sql_encoded}", query_params: {mode: "raw"}).first
+    response = client.sql("query=#{sql_encoded}", query_params: { mode: "raw" }).first
     raise QueryError.new(response[:error], sql) unless response[:error].empty?
 
     response[:data]
   end
 
   def self.tables(prefix: nil)
-      res = query("SHOW TABLES")
-      tables = res.map { |row| row[:Table] }
-      prefix ? tables.select { |t| t.start_with?(prefix) } : tables
+    res = query("SHOW TABLES")
+    tables = res.map { |row| row[:Table] }
+    prefix ? tables.select { |t| t.start_with?(prefix) } : tables
   end
 
   def self.drop_table(name)

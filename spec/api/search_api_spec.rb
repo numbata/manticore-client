@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
+require "spec_helper"
 
-RSpec.describe 'SearchApi' do
+RSpec.describe "SearchApi" do
   let(:table_name) { "#{TABLE_PREFIX}movies" }
   let(:percolate_table_name) { "#{TABLE_PREFIX}pq" }
   let(:api_instance) { Manticore::Client::SearchApi.new }
@@ -24,8 +24,8 @@ RSpec.describe 'SearchApi' do
     ManticoreSqlHelper.drop_table(table_name)
   end
 
-  describe '#autocomplete' do
-    it 'returns suggestions for prefix' do
+  describe "#autocomplete" do
+    it "returns suggestions for prefix" do
       request = Manticore::Client::AutocompleteRequest.new(table: table_name, query: "Hel")
       result = api_instance.autocomplete(request)
       suggestions = result.first[:data].map { |row| row[:query] }
@@ -33,8 +33,8 @@ RSpec.describe 'SearchApi' do
     end
   end
 
-  describe '#search' do
-    it 'returns matching documents' do
+  describe "#search" do
+    it "returns matching documents" do
       request = Manticore::Client::SearchRequest.new(table: table_name, query: { match: { title: "Hello" } })
       result = api_instance.search(request)
       expect(result.hits.total).to eq(1)
@@ -42,7 +42,7 @@ RSpec.describe 'SearchApi' do
     end
   end
 
-  describe '#percolate' do
+  describe "#percolate" do
     before do
       # Create a percolate table with explicit schema following the docs
       ManticoreSqlHelper.query(<<~SQL)
@@ -62,7 +62,7 @@ RSpec.describe 'SearchApi' do
       ManticoreSqlHelper.drop_table(percolate_table_name)
     end
 
-    it 'matches document against stored queries' do
+    it "matches document against stored queries" do
       # Create a document to test against the stored queries
       # Include 'high' in the title to match query 3 and rating > 8.0 to match the filter
       document = { title: "Hello world high", rating: 9.0 }
@@ -80,7 +80,7 @@ RSpec.describe 'SearchApi' do
       result = api_instance.percolate(percolate_table_name, request)
 
       # Verify the results
-      expect(result.hits.total).to be >= 2  # Should match queries 1, 2, and 3
+      expect(result.hits.total).to be >= 2 # Should match queries 1, 2, and 3
 
       # Extract the matched query IDs
       query_ids = result.hits.hits.map { |hit| hit._id.to_i }

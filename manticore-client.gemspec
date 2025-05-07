@@ -18,15 +18,14 @@ Gem::Specification.new do |spec|
     "bug_tracker_uri" => "#{spec.homepage}/issues",
     "changelog_uri" => "#{spec.homepage}/blob/v#{spec.version}/CHANGELOG.md",
     "homepage_uri" => spec.homepage,
-    "source_code_uri" => spec.homepage
+    "source_code_uri" => spec.homepage,
+    "rubygems_mfa_required" => "true"
   }
 
-  spec.add_runtime_dependency "zeitwerk"
-  spec.add_runtime_dependency "faraday", ">= 1.0.1", "< 3.0"
-  spec.add_runtime_dependency "faraday-multipart"
-  spec.add_runtime_dependency "marcel"
-
-  spec.add_development_dependency "rspec", "~> 3.6", ">= 3.6.0"
+  spec.add_dependency "faraday", ">= 1.0.1", "< 3.0"
+  spec.add_dependency "faraday-multipart"
+  spec.add_dependency "marcel"
+  spec.add_dependency "zeitwerk"
 
   spec.files = `git ls-files`.split("\n")
 

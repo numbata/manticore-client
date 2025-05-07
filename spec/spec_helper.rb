@@ -20,7 +20,7 @@ Manticore::Client.configure do |config|
   config.host = "#{parsed.scheme}://#{parsed.host}:#{parsed.port}"
   config.username = parsed.user if parsed.user
   config.password = parsed.password if parsed.password
-  config.debugging = ENV["DEBUG"] == 'true'
+  config.debugging = ENV["DEBUG"] == "true"
 end
 
 # Optionally, check if the server is available before running specs
@@ -28,8 +28,9 @@ begin
   Net::HTTP.start(parsed.host, parsed.port, read_timeout: 2) do |http|
     http.head("/")
   end
-rescue => e
-  abort "\n[ERROR] Could not connect to ManticoreSearch at #{parsed.host}:#{parsed.port}. Is it running? (#{e.class}: #{e.message})\n"
+rescue StandardError => e
+  abort "\n[ERROR] Could not connect to ManticoreSearch at #{parsed.host}:#{parsed.port}. " \
+        "Is it running? (#{e.class}: #{e.message})\n"
 end
 
 RSpec.configure do |config|
@@ -59,9 +60,7 @@ RSpec.configure do |config|
   config.disable_monkey_patching!
   config.warnings = true
 
-  if config.files_to_run.one?
-    config.default_formatter = "doc"
-  end
+  config.default_formatter = "doc" if config.files_to_run.one?
 
   config.profile_examples = 10
   config.order = :random
