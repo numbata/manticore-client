@@ -2,3 +2,4 @@
 /lib/manticore/client/version.rb
 manticore/client.gemspec
 .rubocop.yml
+spec/models
