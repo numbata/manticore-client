@@ -27,7 +27,12 @@ Gem::Specification.new do |spec|
   spec.add_dependency "marcel"
   spec.add_dependency "zeitwerk"
 
-  spec.files = `git ls-files`.split("\n")
+  spec.files = `git ls-files`.split("\n").reject do |f|
+    f.match(%r{^(spec|docs)/}) ||
+      f.match(%r{^\.(git|github)/}) ||
+      f.match(/^\.(gitignore|rubocop.yml|openapi|rspec)/) ||
+      f.match(/^(Rakefile|Gemfile|Gemfile.lock)\b/)
+  end
 
   spec.executables = []
   spec.require_paths = ["lib"]

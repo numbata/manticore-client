@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        ruby-version: ['3.2', '3.3', '3.4']
+        manticore-version: ['9.3.2', 'dev']
+
+    services:
+      manticoresearch:
+        image: manticoresearch/manticore:${{ matrix.manticore-version }}
+        ports:
+          - 9308:9308
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Ruby
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: ${{ matrix.ruby-version }}
+        bundler-cache: true
+    - name: Install dependencies
+      run: bundle install
+    - name: Run tests
+      run: bundle exec rspec
+      env:
+        MANTICORESEARCH_URI: http://localhost:9308
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Ruby
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: '3.4'
+        bundler-cache: true
+    - name: Install dependencies
+      run: bundle install
+    - name: Run RuboCop
+      run: bundle exec rubocop

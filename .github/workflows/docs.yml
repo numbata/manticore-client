@@ -1,0 +1,57 @@
+name: Generate Documentation
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'lib/**'
+      - 'docs/**'
+      - '.github/workflows/docs.yml'
+
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Ruby
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: '3.2'
+        bundler-cache: true
+
+    - name: Install dependencies
+      run: |
+        gem install yard
+        bundle install
+
+    - name: Generate YARD documentation
+      run: |
+        mkdir -p docs/yard
+        yard doc --output-dir docs/yard
+        # Add a .nojekyll file to disable Jekyll processing
+        touch docs/yard/.nojekyll
+        # Create a zip archive for easy deployment
+        cd docs
+        zip -r ../manticore-client-docs.zip yard
+
+    - name: Upload documentation artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: manticore-client-docs
+        path: manticore-client-docs.zip
+        retention-days: 30
+
+    - name: Commit to docs branch
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git checkout -b docs || git checkout docs
+        git pull origin docs || echo "No docs branch yet"
+        cp -r docs/yard/* .
+        git add .
+        git commit -m "Update YARD documentation" || echo "No changes to commit"
+        git push -u origin docs
