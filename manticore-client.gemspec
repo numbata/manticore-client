@@ -1,11 +1,9 @@
 # frozen_string_literal: true
 
-$LOAD_PATH.unshift File.expand_path("lib", __dir__)
-require "manticore/client/version"
-
 Gem::Specification.new do |spec|
   spec.name = "manticore-client"
-  spec.version = Manticore::Client::VERSION
+  spec.version = File.read(File.expand_path("lib/manticore/client/version.rb", __dir__))
+    .match(/VERSION\s*=\s*"([^"]+)"/)[1]
   spec.platform = Gem::Platform::RUBY
   spec.authors = ["OpenAPI-Generator"]
   spec.email = ["subbota@gmail.com"]
