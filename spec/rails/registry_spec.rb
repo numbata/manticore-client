@@ -1,0 +1,64 @@
+# frozen_string_literal: true
+
+require_relative "spec_helper"
+
+RSpec.describe Manticore::Rails::Registry do
+  subject(:registry) { described_class.instance }
+
+  after { registry.reset! }
+
+  let(:fake_index) { double("Index", table_name: "articles") }
+  let(:another_index) { double("Index", table_name: "users") }
+  let(:klass) { Class.new }
+  let(:another_klass) { Class.new }
+
+  describe "#register" do
+    it "stores an index for a class" do
+      registry.register(klass, fake_index)
+      expect(registry.find_by_class(klass)).to eq(fake_index)
+    end
+  end
+
+  describe "#all" do
+    it "returns all registered indexes" do
+      registry.register(klass, fake_index)
+      registry.register(another_klass, another_index)
+      expect(registry.all).to contain_exactly(fake_index, another_index)
+    end
+
+    it "returns empty array when nothing registered" do
+      expect(registry.all).to be_empty
+    end
+  end
+
+  describe "#find_by_class" do
+    it "returns the index for the given class" do
+      registry.register(klass, fake_index)
+      expect(registry.find_by_class(klass)).to eq(fake_index)
+    end
+
+    it "returns nil for unregistered class" do
+      expect(registry.find_by_class(klass)).to be_nil
+    end
+  end
+
+  describe "#find_by_table" do
+    it "returns the index matching the table name" do
+      registry.register(klass, fake_index)
+      registry.register(another_klass, another_index)
+      expect(registry.find_by_table("users")).to eq(another_index)
+    end
+
+    it "returns nil when no index matches" do
+      expect(registry.find_by_table("nonexistent")).to be_nil
+    end
+  end
+
+  describe "#reset!" do
+    it "clears all registered indexes" do
+      registry.register(klass, fake_index)
+      registry.reset!
+      expect(registry.all).to be_empty
+    end
+  end
+end
