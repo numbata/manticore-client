@@ -55,7 +55,10 @@ module Manticore
       end
 
       def sql?
-        column.is_a?(String) && (column.strip.start_with?("(") || column.match?(/\bSELECT\b/i))
+        column.is_a?(String) && (
+          column.strip.start_with?("(") ||
+          column.match?(/\b(?:SELECT|CAST|IF|CONVERT|GROUP_CONCAT|CONCAT|LOWER|UPPER|UNIX_TIMESTAMP)\b/i)
+        )
       end
 
       def association?
