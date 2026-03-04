@@ -13,7 +13,7 @@ Generator version: 7.13.0
 require 'date'
 require 'time'
 
-module Manticore::Client
+module ManticoreClient::Client
   # List of responses from executed SQL queries
   module SqlResponse
     class << self
@@ -82,7 +82,7 @@ module Manticore::Client
             return data.each_with_object({}) { |(k, v), hsh| hsh[k] = find_and_cast_into_type(sub_type, v) }
           end
         else # model
-          const = Manticore::Client.const_get(klass)
+          const = ManticoreClient::Client.const_get(klass)
           if const
             if const.respond_to?(:openapi_one_of) # nested oneOf model
               model = const.build(data)

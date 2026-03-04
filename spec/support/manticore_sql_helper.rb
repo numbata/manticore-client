@@ -10,7 +10,7 @@ module ManticoreSqlHelper
   end
 
   def self.client
-    @client ||= Manticore::Client::UtilsApi.new
+    @client ||= ManticoreClient::Client::UtilsApi.new
   end
 
   def self.query(sql)

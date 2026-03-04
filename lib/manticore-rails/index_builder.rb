@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Manticore
+module ManticoreClient
   module Rails
     class IndexBuilder
       attr_reader :field_definitions, :attribute_definitions, :reindex_association_list, :property_hash

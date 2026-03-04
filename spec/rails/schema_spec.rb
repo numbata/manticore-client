@@ -2,12 +2,12 @@
 
 require_relative "spec_helper"
 
-RSpec.describe Manticore::Rails::Schema do
+RSpec.describe ManticoreClient::Rails::Schema do
   let(:model_class) { Struct.new(:table_name).new("episodes") }
-  let(:index) { Manticore::Rails::Index.new(model_class) }
+  let(:index) { ManticoreClient::Rails::Index.new(model_class) }
 
   before do
-    Manticore::Rails.configuration.index_prefix = nil
+    ManticoreClient::Rails.configuration.index_prefix = nil
 
     index.add_field(:name)
     index.add_field(:description)
@@ -54,7 +54,7 @@ RSpec.describe Manticore::Rails::Schema do
     end
 
     it "maps all types correctly" do
-      idx = Manticore::Rails::Index.new(model_class)
+      idx = ManticoreClient::Rails::Index.new(model_class)
       idx.add_field(:title)
       idx.add_attribute(:flag, type: :boolean)
       idx.add_attribute(:score, type: :float)
@@ -78,8 +78,8 @@ RSpec.describe Manticore::Rails::Schema do
 
   describe ".create_table" do
     it "executes DDL via UtilsApi" do
-      utils_api = instance_double(Manticore::Client::UtilsApi)
-      allow(Manticore::Client::UtilsApi).to receive(:new).and_return(utils_api)
+      utils_api = instance_double(ManticoreClient::Client::UtilsApi)
+      allow(ManticoreClient::Client::UtilsApi).to receive(:new).and_return(utils_api)
       allow(utils_api).to receive(:sql).and_return([{ error: "", data: [] }])
 
       described_class.create_table(index)
@@ -93,8 +93,8 @@ RSpec.describe Manticore::Rails::Schema do
 
   describe ".drop_table" do
     it "executes DROP via UtilsApi" do
-      utils_api = instance_double(Manticore::Client::UtilsApi)
-      allow(Manticore::Client::UtilsApi).to receive(:new).and_return(utils_api)
+      utils_api = instance_double(ManticoreClient::Client::UtilsApi)
+      allow(ManticoreClient::Client::UtilsApi).to receive(:new).and_return(utils_api)
       allow(utils_api).to receive(:sql).and_return([{ error: "", data: [] }])
 
       described_class.drop_table(index)

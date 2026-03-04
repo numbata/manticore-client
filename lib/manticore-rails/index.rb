@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Manticore
+module ManticoreClient
   module Rails
     class Index
       attr_reader :model_class, :fields, :attributes, :properties, :reindex_associations
@@ -30,7 +30,7 @@ module Manticore
       end
 
       def table_name
-        Manticore::Rails.configuration.table_name_for(model_class.table_name)
+        ManticoreClient::Rails.configuration.table_name_for(model_class.table_name)
       end
 
       # All unique association names from fields and attributes

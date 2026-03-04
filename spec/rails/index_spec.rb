@@ -2,7 +2,7 @@
 
 require_relative "spec_helper"
 
-RSpec.describe Manticore::Rails::Index do
+RSpec.describe ManticoreClient::Rails::Index do
   let(:model_class) { Struct.new(:table_name).new("articles") }
 
   subject(:index) { described_class.new(model_class) }
@@ -33,7 +33,7 @@ RSpec.describe Manticore::Rails::Index do
     it "adds a Field to the fields list" do
       index.add_field(:title)
       expect(index.fields.size).to eq(1)
-      expect(index.fields.first).to be_a(Manticore::Rails::Field)
+      expect(index.fields.first).to be_a(ManticoreClient::Rails::Field)
       expect(index.fields.first.column).to eq(:title)
     end
 
@@ -47,7 +47,7 @@ RSpec.describe Manticore::Rails::Index do
     it "adds an Attribute to the attributes list" do
       index.add_attribute(:status, type: :integer)
       expect(index.attributes.size).to eq(1)
-      expect(index.attributes.first).to be_a(Manticore::Rails::Attribute)
+      expect(index.attributes.first).to be_a(ManticoreClient::Rails::Attribute)
       expect(index.attributes.first.column).to eq(:status)
     end
   end
@@ -74,10 +74,10 @@ RSpec.describe Manticore::Rails::Index do
   end
 
   describe "#table_name" do
-    let(:configuration) { Manticore::Rails::Configuration.new }
+    let(:configuration) { ManticoreClient::Rails::Configuration.new }
 
     before do
-      allow(Manticore::Rails).to receive(:configuration).and_return(configuration)
+      allow(ManticoreClient::Rails).to receive(:configuration).and_return(configuration)
     end
 
     it "delegates to configuration without prefix" do
@@ -106,7 +106,7 @@ RSpec.describe Manticore::Rails::Index do
   end
 end
 
-RSpec.describe Manticore::Rails::Field do
+RSpec.describe ManticoreClient::Rails::Field do
   describe "simple symbol column" do
     subject(:field) { described_class.new(:title) }
 
@@ -248,7 +248,7 @@ RSpec.describe Manticore::Rails::Field do
   end
 end
 
-RSpec.describe Manticore::Rails::Attribute do
+RSpec.describe ManticoreClient::Rails::Attribute do
   describe "type mapping" do
     it "maps integer to bigint" do
       attr = described_class.new(:count, type: :integer)

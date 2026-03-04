@@ -2,16 +2,16 @@
 
 require_relative "spec_helper"
 
-RSpec.describe Manticore::Rails::Indexer do
+RSpec.describe ManticoreClient::Rails::Indexer do
   let(:model_class) do
     Struct.new(:table_name).new("episodes")
   end
 
-  let(:index) { Manticore::Rails::Index.new(model_class) }
+  let(:index) { ManticoreClient::Rails::Index.new(model_class) }
   let(:indexer) { described_class.new(index) }
 
   before do
-    Manticore::Rails.configuration.index_prefix = nil
+    ManticoreClient::Rails.configuration.index_prefix = nil
 
     index.add_field(:name)
     index.add_field(:description)
@@ -94,8 +94,8 @@ RSpec.describe Manticore::Rails::Indexer do
 
   describe "#delete_records" do
     it "calls IndexApi.delete for each id" do
-      index_api = instance_double(Manticore::Client::IndexApi)
-      allow(Manticore::Client::IndexApi).to receive(:new).and_return(index_api)
+      index_api = instance_double(ManticoreClient::Client::IndexApi)
+      allow(ManticoreClient::Client::IndexApi).to receive(:new).and_return(index_api)
       allow(index_api).to receive(:delete)
 
       indexer.delete_records([1, 2, 3])
@@ -113,8 +113,8 @@ RSpec.describe Manticore::Rails::Indexer do
       allow(model_class).to receive(:where).and_return(relation)
       allow(relation).to receive(:includes).and_return([record])
 
-      index_api = instance_double(Manticore::Client::IndexApi)
-      allow(Manticore::Client::IndexApi).to receive(:new).and_return(index_api)
+      index_api = instance_double(ManticoreClient::Client::IndexApi)
+      allow(ManticoreClient::Client::IndexApi).to receive(:new).and_return(index_api)
       allow(index_api).to receive(:bulk)
 
       indexer.index_records([1])

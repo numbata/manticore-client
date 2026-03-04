@@ -8,7 +8,7 @@ require_relative "support/manticore_sql_helper"
 # Table prefix for all test indexes; configurable via ENV
 TABLE_PREFIX = ENV["MANTICORE_TEST_PREFIX"] || "test_"
 
-# Configure Manticore::Client from MANTICORESEARCH_URI or default
+# Configure ManticoreClient::Client from MANTICORESEARCH_URI or default
 uri = ENV["MANTICORESEARCH_URI"] || "http://127.0.0.1:9308"
 parsed = URI.parse(uri)
 
@@ -16,7 +16,7 @@ unless parsed.host && parsed.port
   abort "\n[ERROR] MANTICORESEARCH_URI must specify a valid host and port. Got: #{uri}\n"
 end
 
-Manticore::Client.configure do |config|
+ManticoreClient::Client.configure do |config|
   config.host = "#{parsed.scheme}://#{parsed.host}:#{parsed.port}"
   config.username = parsed.user if parsed.user
   config.password = parsed.password if parsed.password
@@ -29,7 +29,7 @@ begin
     http.head("/")
   end
 rescue StandardError => e
-  abort "\n[ERROR] Could not connect to ManticoreSearch at #{parsed.host}:#{parsed.port}. " \
+  abort "\n[ERROR] Could not connect to ManticoreClient at #{parsed.host}:#{parsed.port}. " \
         "Is it running? (#{e.class}: #{e.message})\n"
 end
 

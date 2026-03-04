@@ -2,12 +2,12 @@
 
 require_relative "spec_helper"
 
-RSpec.describe Manticore::Rails::Searcher do
+RSpec.describe ManticoreClient::Rails::Searcher do
   let(:model_class) { Struct.new(:table_name).new("episodes") }
-  let(:index) { Manticore::Rails::Index.new(model_class) }
+  let(:index) { ManticoreClient::Rails::Index.new(model_class) }
 
   before do
-    Manticore::Rails.configuration.index_prefix = nil
+    ManticoreClient::Rails.configuration.index_prefix = nil
     index.add_field(:name)
     index.add_attribute(:id, type: :integer)
   end
@@ -15,7 +15,7 @@ RSpec.describe Manticore::Rails::Searcher do
   describe ".search" do
     it "returns a Result" do
       result = described_class.search(index, "test query")
-      expect(result).to be_a(Manticore::Rails::Result)
+      expect(result).to be_a(ManticoreClient::Rails::Result)
     end
   end
 
@@ -27,14 +27,14 @@ RSpec.describe Manticore::Rails::Searcher do
   end
 end
 
-RSpec.describe Manticore::Rails::Result do
+RSpec.describe ManticoreClient::Rails::Result do
   let(:model_class) { Struct.new(:table_name).new("episodes") }
-  let(:index) { Manticore::Rails::Index.new(model_class) }
-  let(:search_api) { instance_double(Manticore::Client::SearchApi) }
+  let(:index) { ManticoreClient::Rails::Index.new(model_class) }
+  let(:search_api) { instance_double(ManticoreClient::Client::SearchApi) }
 
   before do
-    Manticore::Rails.configuration.index_prefix = nil
-    allow(Manticore::Client::SearchApi).to receive(:new).and_return(search_api)
+    ManticoreClient::Rails.configuration.index_prefix = nil
+    allow(ManticoreClient::Client::SearchApi).to receive(:new).and_return(search_api)
   end
 
   def mock_search_response(total:, hits: [])
@@ -124,7 +124,7 @@ RSpec.describe Manticore::Rails::Result do
       described_class.new(index, "test query").to_a
 
       expect(search_api).to have_received(:search) do |request|
-        expect(request).to be_a(Manticore::Client::SearchRequest)
+        expect(request).to be_a(ManticoreClient::Client::SearchRequest)
         expect(request.table).to eq("episodes")
         expect(request.query.query_string).to eq("test query")
       end
@@ -145,7 +145,7 @@ RSpec.describe Manticore::Rails::Result do
 
       expect(search_api).to have_received(:search) do |request|
         bool = request.query.bool
-        expect(bool).to be_a(Manticore::Client::BoolFilter)
+        expect(bool).to be_a(ManticoreClient::Client::BoolFilter)
         range_filter = bool.must.find { |f| f.range }
         expect(range_filter.range).to eq({ beginning: { gte: 100, lte: 200 } })
       end

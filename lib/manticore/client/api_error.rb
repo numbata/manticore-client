@@ -10,7 +10,7 @@ Generator version: 7.13.0
 
 =end
 
-module Manticore::Client
+module ManticoreClient::Client
   class ApiError < StandardError
     attr_reader :code, :response_headers, :response_body
 

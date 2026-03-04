@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Manticore
+module ManticoreClient
   module Rails
     class Schema
       MANTICORE_TYPE_MAP = {
@@ -55,7 +55,7 @@ module Manticore
         private
 
         def execute(sql)
-          client = Manticore::Client::UtilsApi.new
+          client = ManticoreClient::Client::UtilsApi.new
           sql_encoded = URI.encode_www_form_component(sql)
           response = client.sql("query=#{sql_encoded}", query_params: { mode: "raw" }).first
           raise "SQL failed: #{sql}\n#{response[:error]}" unless response[:error].empty?

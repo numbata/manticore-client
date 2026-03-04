@@ -3,7 +3,7 @@
 require "zeitwerk"
 require "singleton"
 
-module Manticore
+module ManticoreClient
   module Rails
     class << self
       def configuration
@@ -33,9 +33,9 @@ module Manticore
   end
 end
 
-# Set up separate Zeitwerk loader for Manticore::Rails namespace
+# Set up separate Zeitwerk loader for ManticoreClient::Rails namespace
 rails_loader = Zeitwerk::Loader.new
 rails_loader.tag = "manticore-rails"
-rails_loader.push_dir(File.expand_path("rails", __dir__), namespace: Manticore::Rails)
-rails_loader.ignore(File.expand_path("rails/railtie.rb", __dir__))
+rails_loader.push_dir(File.expand_path("manticore-rails", __dir__), namespace: ManticoreClient::Rails)
+rails_loader.ignore(File.expand_path("manticore-rails/railtie.rb", __dir__))
 rails_loader.setup

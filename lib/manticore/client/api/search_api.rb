@@ -12,7 +12,7 @@ Generator version: 7.13.0
 
 require 'cgi'
 
-module Manticore::Client
+module ManticoreClient::Client
   class SearchApi
     attr_accessor :api_client
 

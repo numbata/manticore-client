@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Manticore
+module ManticoreClient
   module Rails
     class Configuration
       attr_accessor :index_prefix, :batch_size, :auto_indexing, :async_indexing, :index_job_class

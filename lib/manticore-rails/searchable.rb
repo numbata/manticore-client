@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Manticore
+module ManticoreClient
   module Rails
     module Searchable
       def self.included(base)
@@ -12,7 +12,7 @@ module Manticore
           builder = IndexBuilder.new(&block)
           index = builder.build(self)
 
-          Manticore::Rails.registry.register(self, index)
+          ManticoreClient::Rails.registry.register(self, index)
 
           # Set up after_commit callbacks if the model supports them
           if respond_to?(:after_commit)
@@ -25,7 +25,7 @@ module Manticore
         end
 
         def manticore_index
-          Manticore::Rails.registry.find_by_class(self)
+          ManticoreClient::Rails.registry.find_by_class(self)
         end
 
         def manticore_indexer
@@ -63,7 +63,7 @@ module Manticore
             end
           rescue => e
             # Log but don't fail if callback setup doesn't work
-            warn "[Manticore::Rails] Failed to setup reindex callback for #{assoc_name}: #{e.message}"
+            warn "[ManticoreClient::Rails] Failed to setup reindex callback for #{assoc_name}: #{e.message}"
           end
         end
       end
@@ -71,7 +71,7 @@ module Manticore
       def manticore_index_record
         return unless manticore_should_index?
 
-        config = Manticore::Rails.configuration
+        config = ManticoreClient::Rails.configuration
         if config.async_indexing && config.index_job_class
           job_class = Object.const_get(config.index_job_class)
           job_class.perform_later(self.class.name, id)
@@ -79,7 +79,7 @@ module Manticore
           self.class.manticore_indexer.index_records([id])
         end
       rescue => e
-        warn "[Manticore::Rails] Failed to index #{self.class.name}##{id}: #{e.message}"
+        warn "[ManticoreClient::Rails] Failed to index #{self.class.name}##{id}: #{e.message}"
       end
 
       def manticore_remove_record
@@ -87,11 +87,11 @@ module Manticore
 
         self.class.manticore_indexer.delete_records([id])
       rescue => e
-        warn "[Manticore::Rails] Failed to remove #{self.class.name}##{id}: #{e.message}"
+        warn "[ManticoreClient::Rails] Failed to remove #{self.class.name}##{id}: #{e.message}"
       end
 
       def manticore_should_index?
-        Manticore::Rails.auto_indexing? && !self.class.manticore_index.nil?
+        ManticoreClient::Rails.auto_indexing? && !self.class.manticore_index.nil?
       end
     end
   end

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Manticore
+module ManticoreClient
   module Rails
     class Searcher
       class << self
@@ -96,7 +96,7 @@ module Manticore
       end
 
       def execute_search
-        api = Manticore::Client::SearchApi.new
+        api = ManticoreClient::Client::SearchApi.new
         request = build_search_request
         api.search(request)
       end
@@ -105,7 +105,7 @@ module Manticore
         query_params = build_query
         sort_params = options[:order] ? build_sort(options[:order]) : nil
 
-        Manticore::Client::SearchRequest.new(
+        ManticoreClient::Client::SearchRequest.new(
           table: index.table_name,
           query: query_params,
           limit: per_page,
@@ -117,19 +117,19 @@ module Manticore
       def build_query
         # Base query
         base = if query && !query.empty?
-          Manticore::Client::SearchQuery.new(query_string: query)
+          ManticoreClient::Client::SearchQuery.new(query_string: query)
         else
-          Manticore::Client::SearchQuery.new(match_all: {})
+          ManticoreClient::Client::SearchQuery.new(match_all: {})
         end
 
         # Add filters from :with option
         if options[:with].is_a?(Hash) && !options[:with].empty?
           filter_queries = options[:with].map { |attr, value| build_filter(attr, value) }
           # Wrap in bool.must with the original query + filters
-          Manticore::Client::SearchQuery.new(
-            bool: Manticore::Client::BoolFilter.new(
+          ManticoreClient::Client::SearchQuery.new(
+            bool: ManticoreClient::Client::BoolFilter.new(
               must: [
-                Manticore::Client::QueryFilter.new(query_string: base.query_string, match_all: base.match_all),
+                ManticoreClient::Client::QueryFilter.new(query_string: base.query_string, match_all: base.match_all),
                 *filter_queries
               ]
             )
@@ -142,15 +142,15 @@ module Manticore
       def build_filter(attr, value)
         case value
         when Range
-          Manticore::Client::QueryFilter.new(
+          ManticoreClient::Client::QueryFilter.new(
             range: { attr => { gte: coerce_filter_value(value.begin), lte: coerce_filter_value(value.end) } }
           )
         when Array
-          Manticore::Client::QueryFilter.new(
+          ManticoreClient::Client::QueryFilter.new(
             _in: { attr => value.map { |v| coerce_filter_value(v) } }
           )
         else
-          Manticore::Client::QueryFilter.new(
+          ManticoreClient::Client::QueryFilter.new(
             equals: { attr => coerce_filter_value(value) }
           )
         end

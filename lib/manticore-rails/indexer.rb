@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Manticore
+module ManticoreClient
   module Rails
     class Indexer
       attr_reader :index
@@ -35,9 +35,9 @@ module Manticore
       end
 
       def delete_records(ids)
-        api = Manticore::Client::IndexApi.new
+        api = ManticoreClient::Client::IndexApi.new
         ids.each do |id|
-          request = Manticore::Client::DeleteDocumentRequest.new(
+          request = ManticoreClient::Client::DeleteDocumentRequest.new(
             table: index.table_name,
             id: id
           )
@@ -46,7 +46,7 @@ module Manticore
       end
 
       def reindex_all(scope: nil)
-        batch_size = Manticore::Rails.configuration.batch_size
+        batch_size = ManticoreClient::Rails.configuration.batch_size
         source = scope || index.model_class
         source.find_in_batches(batch_size: batch_size) do |batch|
           docs = batch.map { |r| serialize(r) }
@@ -125,7 +125,7 @@ module Manticore
           body.to_json
         end.join("\n")
 
-        api = Manticore::Client::IndexApi.new
+        api = ManticoreClient::Client::IndexApi.new
         api.bulk(ndjson)
       end
     end

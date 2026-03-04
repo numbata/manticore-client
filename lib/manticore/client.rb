@@ -2,25 +2,23 @@
 
 require "zeitwerk"
 
-module Manticore
+module ManticoreClient
   # The Manticore Search client for Ruby.
   module Client
   end
 end
 
 loader = Zeitwerk::Loader.for_gem(warn_on_extra_files: false)
-loader.push_dir(__dir__, namespace: Manticore)
-loader.push_dir("#{__dir__}/client/api", namespace: Manticore::Client)
-loader.push_dir("#{__dir__}/client/models", namespace: Manticore::Client)
-loader.ignore("#{__dir__}/rails.rb")
-loader.ignore("#{__dir__}/rails")
+loader.push_dir(__dir__, namespace: ManticoreClient)
+loader.push_dir("#{__dir__}/client/api", namespace: ManticoreClient::Client)
+loader.push_dir("#{__dir__}/client/models", namespace: ManticoreClient::Client)
 loader.setup
 
-module Manticore
+module ManticoreClient
   module Client
     class << self
       # Customize default settings for the SDK using block.
-      #   Manticore::Client.configure do |config|
+      #   ManticoreClient::Client.configure do |config|
       #     config.username = "xxx"
       #     config.password = "xxx"
       #   end
