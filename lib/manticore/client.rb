@@ -2,10 +2,12 @@
 
 require "zeitwerk"
 
-loader = Zeitwerk::Loader.for_gem
+loader = Zeitwerk::Loader.for_gem(warn_on_extra_files: false)
 loader.push_dir(__dir__, namespace: Manticore)
 loader.push_dir("#{__dir__}/client/api", namespace: Manticore::Client)
 loader.push_dir("#{__dir__}/client/models", namespace: Manticore::Client)
+loader.ignore("#{__dir__}/rails.rb")
+loader.ignore("#{__dir__}/rails")
 loader.setup
 
 module Manticore
