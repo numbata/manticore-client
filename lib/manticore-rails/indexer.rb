@@ -34,14 +34,14 @@ module ManticoreRails
     end
 
     def delete_records(ids)
+      return if ids.empty?
+
+      ndjson = ids.map do |id|
+        { delete: { index: index.table_name, id: id } }.to_json
+      end.join("\n")
+
       api = ManticoreClient::Client::IndexApi.new
-      ids.each do |id|
-        request = ManticoreClient::Client::DeleteDocumentRequest.new(
-          table: index.table_name,
-          id: id
-        )
-        api.delete(request)
-      end
+      api.bulk(ndjson)
     end
 
     def reindex_all(scope: nil, &block)

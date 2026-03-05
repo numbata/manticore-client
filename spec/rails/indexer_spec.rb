@@ -93,14 +93,28 @@ RSpec.describe ManticoreRails::Indexer do
   end
 
   describe "#delete_records" do
-    it "calls IndexApi.delete for each id" do
+    it "sends a single bulk NDJSON request" do
       index_api = instance_double(ManticoreClient::Client::IndexApi)
       allow(ManticoreClient::Client::IndexApi).to receive(:new).and_return(index_api)
-      allow(index_api).to receive(:delete)
+      allow(index_api).to receive(:bulk)
 
       indexer.delete_records([1, 2, 3])
 
-      expect(index_api).to have_received(:delete).exactly(3).times
+      expect(index_api).to have_received(:bulk).once do |ndjson|
+        lines = ndjson.split("\n").map { |l| JSON.parse(l) }
+        expect(lines.size).to eq(3)
+        expect(lines.map { |l| l["delete"]["id"] }).to eq([1, 2, 3])
+        expect(lines.all? { |l| l["delete"]["index"] == "episodes" }).to be(true)
+      end
+    end
+
+    it "does nothing for empty ids" do
+      index_api = instance_double(ManticoreClient::Client::IndexApi)
+      allow(ManticoreClient::Client::IndexApi).to receive(:new).and_return(index_api)
+
+      indexer.delete_records([])
+
+      expect(ManticoreClient::Client::IndexApi).not_to have_received(:new)
     end
   end
 
