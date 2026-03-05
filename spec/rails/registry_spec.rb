@@ -2,7 +2,7 @@
 
 require_relative "spec_helper"
 
-RSpec.describe ManticoreClient::Rails::Registry do
+RSpec.describe ManticoreRails::Registry do
   subject(:registry) { described_class.instance }
 
   after { registry.reset! }

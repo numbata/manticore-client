@@ -2,7 +2,7 @@
 
 require_relative "spec_helper"
 
-RSpec.describe ManticoreClient::Rails::AssociationProxy do
+RSpec.describe ManticoreRails::AssociationProxy do
   describe "simple association" do
     subject(:proxy) { described_class.new(:tags) }
 
@@ -34,15 +34,15 @@ RSpec.describe ManticoreClient::Rails::AssociationProxy do
   end
 end
 
-RSpec.describe ManticoreClient::Rails::IndexBuilder do
+RSpec.describe ManticoreRails::IndexBuilder do
   let(:model_class) do
     Struct.new(:table_name).new("episodes")
   end
 
-  let(:configuration) { ManticoreClient::Rails::Configuration.new }
+  let(:configuration) { ManticoreRails::Configuration.new }
 
   before do
-    allow(ManticoreClient::Rails).to receive(:configuration).and_return(configuration)
+    allow(ManticoreRails).to receive(:configuration).and_return(configuration)
   end
 
   describe "simple field indexing" do

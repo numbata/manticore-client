@@ -2,12 +2,12 @@
 
 require_relative "spec_helper"
 
-RSpec.describe ManticoreClient::Rails::Schema do
+RSpec.describe ManticoreRails::Schema do
   let(:model_class) { Struct.new(:table_name).new("episodes") }
-  let(:index) { ManticoreClient::Rails::Index.new(model_class) }
+  let(:index) { ManticoreRails::Index.new(model_class) }
 
   before do
-    ManticoreClient::Rails.configuration.index_prefix = nil
+    ManticoreRails.configuration.index_prefix = nil
 
     index.add_field(:name)
     index.add_field(:description)
@@ -54,7 +54,7 @@ RSpec.describe ManticoreClient::Rails::Schema do
     end
 
     it "maps all types correctly" do
-      idx = ManticoreClient::Rails::Index.new(model_class)
+      idx = ManticoreRails::Index.new(model_class)
       idx.add_field(:title)
       idx.add_attribute(:flag, type: :boolean)
       idx.add_attribute(:score, type: :float)

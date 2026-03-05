@@ -2,7 +2,7 @@
 
 require_relative "spec_helper"
 
-RSpec.describe ManticoreClient::Rails::Searchable do
+RSpec.describe ManticoreRails::Searchable do
   # Create a mock model class that includes Searchable
   let(:model_class) do
     klass = Class.new do
@@ -22,7 +22,7 @@ RSpec.describe ManticoreClient::Rails::Searchable do
         nil
       end
 
-      include ManticoreClient::Rails::Searchable
+      include ManticoreRails::Searchable
 
       define_manticore_index do
         indexes :name
@@ -40,20 +40,20 @@ RSpec.describe ManticoreClient::Rails::Searchable do
   end
 
   before do
-    ManticoreClient::Rails.configuration.index_prefix = nil
-    ManticoreClient::Rails.registry.reset!
+    ManticoreRails.configuration.index_prefix = nil
+    ManticoreRails.registry.reset!
     # Re-trigger define_manticore_index by re-including
     model_class
   end
 
   after do
-    ManticoreClient::Rails.registry.reset!
+    ManticoreRails.registry.reset!
   end
 
   describe ".define_manticore_index" do
     it "registers the index in the registry" do
-      index = ManticoreClient::Rails.registry.find_by_class(model_class)
-      expect(index).to be_a(ManticoreClient::Rails::Index)
+      index = ManticoreRails.registry.find_by_class(model_class)
+      expect(index).to be_a(ManticoreRails::Index)
     end
 
     it "creates an index with correct fields" do
@@ -69,28 +69,28 @@ RSpec.describe ManticoreClient::Rails::Searchable do
 
   describe ".manticore_index" do
     it "returns the registered index" do
-      expect(model_class.manticore_index).to be_a(ManticoreClient::Rails::Index)
+      expect(model_class.manticore_index).to be_a(ManticoreRails::Index)
       expect(model_class.manticore_index.table_name).to eq("test_models")
     end
   end
 
   describe ".manticore_indexer" do
     it "returns an Indexer for the model" do
-      expect(model_class.manticore_indexer).to be_a(ManticoreClient::Rails::Indexer)
+      expect(model_class.manticore_indexer).to be_a(ManticoreRails::Indexer)
     end
   end
 
   describe ".search" do
     it "delegates to Searcher" do
       result = model_class.search("test query")
-      expect(result).to be_a(ManticoreClient::Rails::Result)
+      expect(result).to be_a(ManticoreRails::Result)
     end
   end
 
   describe ".search_for_ids" do
     it "delegates to Searcher with ids_only" do
       result = model_class.search_for_ids("test query")
-      expect(result).to be_a(ManticoreClient::Rails::Result)
+      expect(result).to be_a(ManticoreRails::Result)
       expect(result.options[:ids_only]).to be(true)
     end
   end
@@ -102,7 +102,7 @@ RSpec.describe ManticoreClient::Rails::Searchable do
     end
 
     it "returns false when auto_indexing is disabled" do
-      ManticoreClient::Rails.no_auto_indexing do
+      ManticoreRails.no_auto_indexing do
         instance = model_class.new
         expect(instance.manticore_should_index?).to be(false)
       end
@@ -111,8 +111,8 @@ RSpec.describe ManticoreClient::Rails::Searchable do
 
   describe "#manticore_index_record" do
     it "calls indexer.index_records when sync" do
-      indexer = instance_double(ManticoreClient::Rails::Indexer)
-      allow(ManticoreClient::Rails::Indexer).to receive(:new).and_return(indexer)
+      indexer = instance_double(ManticoreRails::Indexer)
+      allow(ManticoreRails::Indexer).to receive(:new).and_return(indexer)
       allow(indexer).to receive(:index_records)
 
       instance = model_class.new
@@ -122,11 +122,11 @@ RSpec.describe ManticoreClient::Rails::Searchable do
     end
 
     it "does nothing when auto_indexing is off" do
-      indexer = instance_double(ManticoreClient::Rails::Indexer)
-      allow(ManticoreClient::Rails::Indexer).to receive(:new).and_return(indexer)
+      indexer = instance_double(ManticoreRails::Indexer)
+      allow(ManticoreRails::Indexer).to receive(:new).and_return(indexer)
       allow(indexer).to receive(:index_records)
 
-      ManticoreClient::Rails.no_auto_indexing do
+      ManticoreRails.no_auto_indexing do
         instance = model_class.new
         instance.manticore_index_record
       end
@@ -137,8 +137,8 @@ RSpec.describe ManticoreClient::Rails::Searchable do
 
   describe "#manticore_remove_record" do
     it "calls indexer.delete_records" do
-      indexer = instance_double(ManticoreClient::Rails::Indexer)
-      allow(ManticoreClient::Rails::Indexer).to receive(:new).and_return(indexer)
+      indexer = instance_double(ManticoreRails::Indexer)
+      allow(ManticoreRails::Indexer).to receive(:new).and_return(indexer)
       allow(indexer).to receive(:delete_records)
 
       instance = model_class.new

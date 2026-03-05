@@ -1,0 +1,192 @@
+# manticore-rails
+
+ActiveRecord integration for [Manticore Search](https://manticoresearch.com) with a ThinkingSphinx-style DSL.
+
+Part of the [manticore-client](https://github.com/numbata/manticore-client) project.
+
+## Installation
+
+```ruby
+# Gemfile
+gem "manticore-rails", "~> 0.1"
+```
+
+This pulls in `manticore-client` (the HTTP layer) automatically.
+
+## Quick start
+
+```ruby
+# config/initializers/manticore.rb
+
+ManticoreClient::Client.configure do |config|
+  config.host = ENV.fetch("MANTICORESEARCH_URL", "http://127.0.0.1:9308")
+end
+
+ManticoreRails.configure do |config|
+  config.index_prefix = Rails.env.test? ? "test_" : nil
+  config.batch_size = 1000
+  config.auto_indexing = true
+  config.async_indexing = false
+end
+```
+
+```ruby
+class Article < ApplicationRecord
+  include ManticoreRails::Searchable
+
+  define_manticore_index do
+    indexes :title
+    indexes :body
+    indexes tags.name, as: :tag_names
+
+    has :id, type: :integer
+    has :status, type: :integer
+    has :published_at, type: :datetime
+  end
+end
+```
+
+```bash
+rake manticore:setup  # creates tables and populates indexes
+```
+
+```ruby
+Article.search("ruby", with: { status: 1 }, page: 1, per_page: 20)
+```
+
+## Index definition
+
+Include `ManticoreRails::Searchable` and define your index with `define_manticore_index`:
+
+```ruby
+define_manticore_index do
+  # Full-text fields — searchable via Article.search("query")
+  indexes :title
+  indexes :body
+
+  # Association fields — dot notation, values joined with spaces
+  indexes tags.name, as: :tag_names         # has_many
+  indexes author.name, as: :author_name     # belongs_to
+
+  # Attributes — filterable and sortable, not full-text searched
+  has :id, type: :integer
+  has :status, type: :integer
+  has :published_at, type: :datetime
+  has :featured, type: :boolean
+
+  # Reindex parent record when associated records change
+  reindex_on_change :tags
+end
+```
+
+### Custom serialization
+
+Override `manticore_serialize` to control the indexed document. Required when your index uses SQL placeholders or computed values:
+
+```ruby
+def manticore_serialize
+  {
+    "id" => id,
+    "title" => title,
+    "tag_names" => tags.pluck(:name).join(" "),
+    "summary" => compute_summary,
+    "status" => status || 0,
+    "published_at" => published_at&.to_i || 0
+  }.compact
+end
+```
+
+When defined, this replaces the default field-walking serialization entirely.
+
+### Type mapping
+
+| Ruby type    | Manticore type |
+|-------------|----------------|
+| `:integer`  | `bigint`       |
+| `:datetime` | `timestamp`    |
+| `:boolean`  | `bool`         |
+| `:float`    | `float`        |
+| `:string`   | `string`       |
+| `:text`     | `text`         |
+| `:json`     | `json`         |
+
+## Search
+
+```ruby
+# Full-text
+Article.search("ruby on rails")
+
+# Filters
+Article.search("ruby", with: { status: 1 })
+Article.search("ruby", with: { status: [1, 2] })                          # IN
+Article.search("", with: { published_at: 1.week.ago.to_i..Time.current.to_i }) # range
+
+# Sorting
+Article.search("ruby", order: { published_at: :desc })
+Article.search("ruby", order: "published_at DESC")
+
+# Pagination
+results = Article.search("ruby", page: 2, per_page: 20)
+results.total_entries  # => 156
+results.total_pages    # => 8
+results.current_page   # => 2
+results.next_page      # => 3
+results.previous_page  # => 1
+
+# IDs only (skips model loading)
+Article.search_for_ids("ruby", with: { status: 1 })
+```
+
+## Auto-indexing
+
+With `auto_indexing: true` (the default), records are indexed and removed via `after_commit` callbacks. Disable temporarily for bulk operations:
+
+```ruby
+ManticoreRails.no_auto_indexing do
+  Article.insert_all(big_batch)
+end
+
+ManticoreRails::Indexer.new(Article.manticore_index).reindex_all
+```
+
+### Async indexing
+
+For background indexing, set `async_indexing: true` and provide a job class:
+
+```ruby
+ManticoreRails.configure do |config|
+  config.async_indexing = true
+  config.index_job_class = "ManticoreIndexJob"
+end
+```
+
+The job class receives `(action, class_name, id)` and should call the indexer accordingly.
+
+## Rake tasks
+
+```bash
+rake manticore:setup                     # drop + create + populate all indexes
+
+rake manticore:schema:create             # create ManticoreSearch tables
+rake manticore:schema:drop               # drop ManticoreSearch tables
+rake manticore:schema:rebuild            # drop + create
+
+rake manticore:index:rebuild             # reindex all tables
+rake manticore:index:rebuild[articles]   # reindex specific table
+```
+
+## Configuration reference
+
+```ruby
+ManticoreRails.configure do |config|
+  config.index_prefix    = nil           # prefix for table names (e.g. "test_")
+  config.batch_size      = 1000          # records per batch during reindex
+  config.auto_indexing   = true          # after_commit index/remove callbacks
+  config.async_indexing  = false         # delegate indexing to a background job
+  config.index_job_class = nil           # job class name (string) for async mode
+end
+```
+
+## License
+
+MIT. See [LICENSE.txt](LICENSE.txt).

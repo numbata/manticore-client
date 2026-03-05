@@ -2,12 +2,12 @@
 
 require_relative "spec_helper"
 
-RSpec.describe ManticoreClient::Rails::Searcher do
+RSpec.describe ManticoreRails::Searcher do
   let(:model_class) { Struct.new(:table_name).new("episodes") }
-  let(:index) { ManticoreClient::Rails::Index.new(model_class) }
+  let(:index) { ManticoreRails::Index.new(model_class) }
 
   before do
-    ManticoreClient::Rails.configuration.index_prefix = nil
+    ManticoreRails.configuration.index_prefix = nil
     index.add_field(:name)
     index.add_attribute(:id, type: :integer)
   end
@@ -15,7 +15,7 @@ RSpec.describe ManticoreClient::Rails::Searcher do
   describe ".search" do
     it "returns a Result" do
       result = described_class.search(index, "test query")
-      expect(result).to be_a(ManticoreClient::Rails::Result)
+      expect(result).to be_a(ManticoreRails::Result)
     end
   end
 
@@ -27,13 +27,13 @@ RSpec.describe ManticoreClient::Rails::Searcher do
   end
 end
 
-RSpec.describe ManticoreClient::Rails::Result do
+RSpec.describe ManticoreRails::Result do
   let(:model_class) { Struct.new(:table_name).new("episodes") }
-  let(:index) { ManticoreClient::Rails::Index.new(model_class) }
+  let(:index) { ManticoreRails::Index.new(model_class) }
   let(:search_api) { instance_double(ManticoreClient::Client::SearchApi) }
 
   before do
-    ManticoreClient::Rails.configuration.index_prefix = nil
+    ManticoreRails.configuration.index_prefix = nil
     allow(ManticoreClient::Client::SearchApi).to receive(:new).and_return(search_api)
   end
 

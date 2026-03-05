@@ -6,7 +6,7 @@ namespace :manticore do
     task create: :environment do
       each_index do |index|
         puts "Creating table: #{index.table_name}"
-        ManticoreClient::Rails::Schema.create_table(index)
+        ManticoreRails::Schema.create_table(index)
       end
     end
 
@@ -14,7 +14,7 @@ namespace :manticore do
     task drop: :environment do
       each_index do |index|
         puts "Dropping table: #{index.table_name}"
-        ManticoreClient::Rails::Schema.drop_table(index)
+        ManticoreRails::Schema.drop_table(index)
       end
     end
 
@@ -30,14 +30,14 @@ namespace :manticore do
     task :rebuild, [:table] => :environment do |_t, args|
       load_all_indexed_models
       indexes = if args[:table]
-        [ManticoreClient::Rails::Registry.instance.find_by_table(args[:table])].compact
+        [ManticoreRails::Registry.instance.find_by_table(args[:table])].compact
       else
-        ManticoreClient::Rails::Registry.instance.all
+        ManticoreRails::Registry.instance.all
       end
 
       abort "No indexes found" if indexes.empty?
 
-      ManticoreClient::Rails.no_auto_indexing do
+      ManticoreRails.no_auto_indexing do
         indexes.each do |index|
           reindex_with_progress(index)
         end
@@ -48,19 +48,19 @@ namespace :manticore do
   desc "Full setup: create tables and populate all indexes from scratch"
   task setup: :environment do
     load_all_indexed_models
-    indexes = ManticoreClient::Rails::Registry.instance.all
+    indexes = ManticoreRails::Registry.instance.all
     abort "No indexes registered" if indexes.empty?
 
-    ManticoreClient::Rails.no_auto_indexing do
+    ManticoreRails.no_auto_indexing do
       indexes.each do |index|
         puts "==> #{index.model_class.name} (#{index.table_name})"
 
         print "    Dropping table... "
-        ManticoreClient::Rails::Schema.drop_table(index) rescue nil
+        ManticoreRails::Schema.drop_table(index) rescue nil
         puts "done"
 
         print "    Creating table... "
-        ManticoreClient::Rails::Schema.create_table(index)
+        ManticoreRails::Schema.create_table(index)
         puts "done"
 
         reindex_with_progress(index)
@@ -87,7 +87,7 @@ def reindex_with_progress(index)
   end
 
   started_at = Time.now
-  indexed = ManticoreClient::Rails::Indexer.new(index).reindex_all do |count|
+  indexed = ManticoreRails::Indexer.new(index).reindex_all do |count|
     elapsed = Time.now - started_at
     rate = count / elapsed
     print "\r    Indexed #{count}/#{total_records} (#{"%.0f" % rate} docs/s)"

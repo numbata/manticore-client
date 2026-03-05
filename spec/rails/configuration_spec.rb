@@ -2,7 +2,7 @@
 
 require_relative "spec_helper"
 
-RSpec.describe ManticoreClient::Rails::Configuration do
+RSpec.describe ManticoreRails::Configuration do
   subject(:config) { described_class.new }
 
   describe "default values" do

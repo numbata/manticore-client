@@ -1,6 +1,7 @@
 source "https://rubygems.org"
 
-gemspec
+gemspec name: "manticore-client"
+gemspec name: "manticore-rails"
 
 group :development, :test do
   gem "pry-byebug"

@@ -2,16 +2,16 @@
 
 require_relative "spec_helper"
 
-RSpec.describe ManticoreClient::Rails::Indexer do
+RSpec.describe ManticoreRails::Indexer do
   let(:model_class) do
     Struct.new(:table_name).new("episodes")
   end
 
-  let(:index) { ManticoreClient::Rails::Index.new(model_class) }
+  let(:index) { ManticoreRails::Index.new(model_class) }
   let(:indexer) { described_class.new(index) }
 
   before do
-    ManticoreClient::Rails.configuration.index_prefix = nil
+    ManticoreRails.configuration.index_prefix = nil
 
     index.add_field(:name)
     index.add_field(:description)
@@ -109,9 +109,8 @@ RSpec.describe ManticoreClient::Rails::Indexer do
       record = double("record", id: 1, name: "Test", description: "Desc",
                        beginning: Time.now, channel_id: 1)
 
-      relation = double("relation")
-      allow(model_class).to receive(:where).and_return(relation)
-      allow(relation).to receive(:includes).and_return([record])
+      scope = double("scope", includes: [record])
+      allow(index).to receive(:model_class).and_return(double("ar_class", table_name: "episodes", where: scope))
 
       index_api = instance_double(ManticoreClient::Client::IndexApi)
       allow(ManticoreClient::Client::IndexApi).to receive(:new).and_return(index_api)

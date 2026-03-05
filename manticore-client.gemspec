@@ -29,7 +29,10 @@ Gem::Specification.new do |spec|
     f.match(%r{^(spec|docs)/}) ||
       f.match(%r{^\.(git|github)/}) ||
       f.match(/^\.(gitignore|rubocop.yml|openapi|rspec)/) ||
-      f.match(/^(Rakefile|Gemfile|Gemfile.lock)\b/)
+      f.match(/^(Rakefile|Gemfile|Gemfile.lock)\b/) ||
+      f.match(%r{^lib/manticore-rails}) ||
+      f.match(%r{^lib/tasks/}) ||
+      f.match(/^manticore-rails\.gemspec$/)
   end
 
   spec.executables = []
