@@ -105,13 +105,15 @@ module ManticoreClient
         query_params = build_query
         sort_params = options[:order] ? build_sort(options[:order]) : nil
 
-        ManticoreClient::Client::SearchRequest.new(
+        attrs = {
           table: index.table_name,
           query: query_params,
           limit: per_page,
-          offset: offset,
-          sort: sort_params
-        )
+          offset: offset
+        }
+        attrs[:sort] = sort_params if sort_params
+
+        ManticoreClient::Client::SearchRequest.new(**attrs)
       end
 
       def build_query
