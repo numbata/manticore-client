@@ -39,3 +39,5 @@ rails_loader.tag = "manticore-rails"
 rails_loader.push_dir(File.expand_path("manticore-rails", __dir__), namespace: ManticoreClient::Rails)
 rails_loader.ignore(File.expand_path("manticore-rails/railtie.rb", __dir__))
 rails_loader.setup
+
+require_relative "manticore-rails/railtie" if defined?(::Rails::Railtie)

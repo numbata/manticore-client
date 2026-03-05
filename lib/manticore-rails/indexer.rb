@@ -45,13 +45,19 @@ module ManticoreClient
         end
       end
 
-      def reindex_all(scope: nil)
+      def reindex_all(scope: nil, &block)
         batch_size = ManticoreClient::Rails.configuration.batch_size
         source = scope || index.model_class
-        source.find_in_batches(batch_size: batch_size) do |batch|
+        associations = index.referenced_associations
+
+        total = 0
+        source.includes(*associations).find_in_batches(batch_size: batch_size) do |batch|
           docs = batch.map { |r| serialize(r) }
           bulk_replace(docs)
+          total += docs.size
+          block&.call(total)
         end
+        total
       end
 
       private

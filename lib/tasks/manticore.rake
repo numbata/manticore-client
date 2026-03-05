@@ -2,23 +2,23 @@
 
 namespace :manticore do
   namespace :schema do
-    desc "Create all ManticoreClient tables"
+    desc "Create all ManticoreSearch tables"
     task create: :environment do
-      ManticoreClient::Rails::Registry.instance.all.each do |index|
+      each_index do |index|
         puts "Creating table: #{index.table_name}"
         ManticoreClient::Rails::Schema.create_table(index)
       end
     end
 
-    desc "Drop all ManticoreClient tables"
+    desc "Drop all ManticoreSearch tables"
     task drop: :environment do
-      ManticoreClient::Rails::Registry.instance.all.each do |index|
+      each_index do |index|
         puts "Dropping table: #{index.table_name}"
         ManticoreClient::Rails::Schema.drop_table(index)
       end
     end
 
-    desc "Rebuild all ManticoreClient tables (drop + create)"
+    desc "Rebuild all ManticoreSearch tables (drop + create)"
     task rebuild: :environment do
       Rake::Task["manticore:schema:drop"].invoke
       Rake::Task["manticore:schema:create"].invoke
@@ -26,20 +26,73 @@ namespace :manticore do
   end
 
   namespace :index do
-    desc "Rebuild ManticoreClient index (all or specific table)"
+    desc "Reindex all data (or specific table) into ManticoreSearch"
     task :rebuild, [:table] => :environment do |_t, args|
+      load_all_indexed_models
       indexes = if args[:table]
-        [ManticoreClient::Rails::Registry.instance.find_by_table(args[:table])]
+        [ManticoreClient::Rails::Registry.instance.find_by_table(args[:table])].compact
       else
         ManticoreClient::Rails::Registry.instance.all
       end
 
+      abort "No indexes found" if indexes.empty?
+
       ManticoreClient::Rails.no_auto_indexing do
-        indexes.compact.each do |index|
-          puts "Reindexing: #{index.table_name}"
-          ManticoreClient::Rails::Indexer.new(index).reindex_all
+        indexes.each do |index|
+          reindex_with_progress(index)
         end
       end
     end
   end
+
+  desc "Full setup: create tables and populate all indexes from scratch"
+  task setup: :environment do
+    load_all_indexed_models
+    indexes = ManticoreClient::Rails::Registry.instance.all
+    abort "No indexes registered" if indexes.empty?
+
+    ManticoreClient::Rails.no_auto_indexing do
+      indexes.each do |index|
+        puts "==> #{index.model_class.name} (#{index.table_name})"
+
+        print "    Dropping table... "
+        ManticoreClient::Rails::Schema.drop_table(index) rescue nil
+        puts "done"
+
+        print "    Creating table... "
+        ManticoreClient::Rails::Schema.create_table(index)
+        puts "done"
+
+        reindex_with_progress(index)
+        puts
+      end
+    end
+
+    puts "Setup complete."
+  end
+end
+
+def load_all_indexed_models
+  ::Rails.application.eager_load! if defined?(::Rails)
+end
+
+def reindex_with_progress(index)
+  model = index.model_class
+  total_records = model.count
+  puts "    Indexing #{model.name}: #{total_records} records"
+
+  if total_records == 0
+    puts "    Nothing to index."
+    return
+  end
+
+  started_at = Time.now
+  indexed = ManticoreClient::Rails::Indexer.new(index).reindex_all do |count|
+    elapsed = Time.now - started_at
+    rate = count / elapsed
+    print "\r    Indexed #{count}/#{total_records} (#{"%.0f" % rate} docs/s)"
+  end
+
+  elapsed = Time.now - started_at
+  puts "\r    Indexed #{indexed}/#{total_records} in #{"%.1f" % elapsed}s"
 end
