@@ -31,6 +31,14 @@ module ManticoreRails
     def registry
       Registry.instance
     end
+
+    def healthy?
+      client = ManticoreClient::Client::UtilsApi.new
+      response = client.sql("query=SHOW+STATUS", query_params: { mode: "raw" })
+      response.is_a?(Array) && !response.empty?
+    rescue StandardError
+      false
+    end
   end
 end
 

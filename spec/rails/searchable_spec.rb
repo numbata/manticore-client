@@ -235,3 +235,22 @@ RSpec.describe ManticoreRails::Searchable do
     end
   end
 end
+
+RSpec.describe ManticoreRails do
+  describe ".healthy?" do
+    it "returns true when ManticoreSearch responds" do
+      utils_api = instance_double(ManticoreClient::Client::UtilsApi)
+      allow(ManticoreClient::Client::UtilsApi).to receive(:new).and_return(utils_api)
+      allow(utils_api).to receive(:sql).and_return([{ data: [], error: "" }])
+
+      expect(described_class.healthy?).to be(true)
+    end
+
+    it "returns false when ManticoreSearch is unreachable" do
+      allow(ManticoreClient::Client::UtilsApi).to receive(:new)
+        .and_raise(Faraday::ConnectionFailed.new("connection refused"))
+
+      expect(described_class.healthy?).to be(false)
+    end
+  end
+end
