@@ -36,7 +36,7 @@ module ManticoreRails
     def referenced_associations
       (fields + attributes)
         .select(&:association?)
-        .map { |f| f.association_path.first }
+        .map(&:association_name)
         .uniq
     end
   end
@@ -70,12 +70,12 @@ module ManticoreRails
 
     def association_name
       return nil unless association?
-      column.to_s.split(".").first.to_sym
+      column_parts.first
     end
 
     def column_name
       if association?
-        column.to_s.split(".").last.to_sym
+        column_parts.last
       elsif sql?
         options[:as] || :unknown
       else
@@ -85,11 +85,17 @@ module ManticoreRails
 
     def association_path
       return [] unless association?
-      column.to_s.split(".").map(&:to_sym)
+      column_parts
     end
 
     def manticore_type
       :text
+    end
+
+    private
+
+    def column_parts
+      @column_parts ||= column.to_s.split(".").map(&:to_sym)
     end
   end
 
