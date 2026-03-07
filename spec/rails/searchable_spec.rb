@@ -257,6 +257,12 @@ RSpec.describe ManticoreRails do
       expect(described_class.circuit_open?).to be(false)
     end
 
+    it "resets via reset_circuit!" do
+      5.times { described_class.record_failure! }
+      described_class.reset_circuit!
+      expect(described_class.circuit_open?).to be(false)
+    end
+
     it "prevents indexing when circuit is open" do
       described_class.configuration.circuit_breaker_threshold.times do
         described_class.record_failure!

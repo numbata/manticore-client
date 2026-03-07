@@ -47,6 +47,8 @@ module ManticoreRails
       @circuit_mutex.synchronize { @failure_count = 0 }
     end
 
+    alias reset_circuit! record_success!
+
     def healthy?
       client = ManticoreClient::Client::UtilsApi.new
       response = client.sql("query=SHOW+STATUS", query_params: { mode: "raw" })
