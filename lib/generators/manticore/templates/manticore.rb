@@ -9,6 +9,8 @@ ManticoreRails.configure do |config|
   config.batch_size      = 1000
   config.auto_indexing   = true
   config.async_indexing  = false
-  # config.index_job_class = "ManticoreIndexJob"
+  # config.index_job_class           = "ManticoreIndexJob"
+  # config.circuit_breaker_threshold = 10
   # config.on_error = ->(msg, err) { Rails.logger.error("[ManticoreRails] #{msg}: #{err.message}") }
+  config.on_error = :raise if Rails.env.local?
 end
