@@ -72,6 +72,11 @@ namespace :manticore do
   end
 end
 
+def each_index
+  load_all_indexed_models
+  ManticoreRails::Registry.instance.all.each { |index| yield index }
+end
+
 def load_all_indexed_models
   ::Rails.application.eager_load! if defined?(::Rails)
 end
