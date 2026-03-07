@@ -74,6 +74,29 @@ RSpec.describe ManticoreRails::Configuration do
     end
   end
 
+  describe "#on_error" do
+    it "defaults to a warn lambda" do
+      expect(config.on_error).to be_a(Proc)
+    end
+
+    it "accepts :raise to re-raise errors" do
+      config.on_error = :raise
+      expect { config.on_error.call("test", RuntimeError.new("boom")) }.to raise_error(RuntimeError, "boom")
+    end
+
+    it "accepts a custom lambda" do
+      messages = []
+      config.on_error = ->(msg, _err) { messages << msg }
+      config.on_error.call("hello", StandardError.new)
+      expect(messages).to eq(["hello"])
+    end
+
+    it "accepts nil to disable error handling" do
+      config.on_error = nil
+      expect(config.on_error).to be_nil
+    end
+  end
+
   describe "#table_name_for" do
     context "without prefix" do
       it "returns the name as-is" do

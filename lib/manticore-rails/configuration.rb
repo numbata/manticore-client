@@ -2,8 +2,8 @@
 
 module ManticoreRails
   class Configuration
-    attr_accessor :auto_indexing, :async_indexing, :on_error, :circuit_breaker_threshold
-    attr_reader :index_job_class, :index_prefix, :batch_size
+    attr_accessor :auto_indexing, :async_indexing, :circuit_breaker_threshold
+    attr_reader :on_error, :index_job_class, :index_prefix, :batch_size
 
     def initialize
       @index_prefix = nil
@@ -28,6 +28,15 @@ module ManticoreRails
       end
 
       @index_prefix = value&.to_s
+    end
+
+    def on_error=(value)
+      @on_error = case value
+                  when :raise
+                    ->(_message, error) { raise error }
+                  else
+                    value
+      end
     end
 
     def index_job_class=(value)
