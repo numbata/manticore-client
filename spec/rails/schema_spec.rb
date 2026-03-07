@@ -53,6 +53,11 @@ RSpec.describe ManticoreRails::Schema do
       expect(sql).to include("enable_star = 'true'")
     end
 
+    it "rejects property keys with invalid characters" do
+      index.set_property("bad'; DROP TABLE" => "evil")
+      expect { described_class.create_table_sql(index) }.to raise_error(ArgumentError, /Invalid property name/)
+    end
+
     it "maps all types correctly" do
       idx = ManticoreRails::Index.new(model_class)
       idx.add_field(:title)

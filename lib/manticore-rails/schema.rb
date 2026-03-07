@@ -30,7 +30,12 @@ module ManticoreRails
         sql = "CREATE TABLE IF NOT EXISTS #{index.table_name} (#{columns.join(", ")})"
 
         if index.properties.any?
-          options = index.properties.map { |k, v| "#{k} = '#{v.to_s.gsub("'", "''")}'" }.join(" ")
+          options = index.properties.map do |k, v|
+            key = k.to_s
+            raise ArgumentError, "Invalid property name: #{key}" unless key.match?(/\A[a-z_][a-z0-9_]*\z/i)
+
+            "#{key} = '#{v.to_s.gsub("'", "''")}'"
+          end.join(" ")
           sql += " #{options}"
         end
 
