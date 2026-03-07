@@ -30,7 +30,7 @@ module ManticoreRails
       end
 
       def manticore_indexer
-        Indexer.new(manticore_index)
+        @manticore_indexer ||= Indexer.new(manticore_index)
       end
 
       def search(query, options = {})
