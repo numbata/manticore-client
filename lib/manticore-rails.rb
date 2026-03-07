@@ -15,15 +15,16 @@ module ManticoreRails
     end
 
     def auto_indexing?
+      return false if Thread.current[:manticore_no_auto_indexing]
+
       configuration.auto_indexing
     end
 
     def no_auto_indexing
-      old = configuration.auto_indexing
-      configuration.auto_indexing = false
+      Thread.current[:manticore_no_auto_indexing] = true
       yield
     ensure
-      configuration.auto_indexing = old
+      Thread.current[:manticore_no_auto_indexing] = false
     end
 
     def registry
