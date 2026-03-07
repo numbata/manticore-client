@@ -12,7 +12,7 @@ Gem::Specification.new do |spec|
   spec.description = "ActiveRecord DSL for ManticoreSearch: index definitions, " \
                      "full-text search, auto-indexing callbacks, and rake tasks."
   spec.license = "MIT"
-  spec.required_ruby_version = ">= 2.7"
+  spec.required_ruby_version = ">= 3.0"
   spec.metadata = {
     "bug_tracker_uri" => "#{spec.homepage}/issues",
     "documentation_uri" => "#{spec.homepage}/blob/main/README-rails.md",

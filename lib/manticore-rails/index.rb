@@ -71,8 +71,8 @@ module ManticoreRails
       (options[:as] || column_name).to_sym
     end
 
-    SQL_KEYWORDS = /\b(?:SELECT|CAST|IF|CONVERT|GROUP_CONCAT|CONCAT|LOWER|UPPER|UNIX_TIMESTAMP)\b/i.freeze
-    SQL_FUNCTION = /\A\w+\(.*\)\z/.freeze
+    SQL_KEYWORDS = /\b(?:SELECT|CAST|IF|CONVERT|GROUP_CONCAT|CONCAT|LOWER|UPPER|UNIX_TIMESTAMP)\b/i
+    SQL_FUNCTION = /\A\w+\(.*\)\z/
 
     def sql?
       column.is_a?(String) && (
