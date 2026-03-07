@@ -56,10 +56,10 @@ module ManticoreRails
           reflection.klass.class_eval do
             after_commit(on: %i[create update destroy]) do
               parent = send(inverse_name)
-              parent&.manticore_index_record if parent&.respond_to?(:manticore_index_record)
+              parent.manticore_index_record if parent&.respond_to?(:manticore_index_record)
             end
           end
-        rescue => e
+        rescue StandardError => e
           ManticoreRails.configuration.on_error&.call(
             "Failed to setup reindex callback for #{assoc_name}", e
           )
@@ -77,7 +77,7 @@ module ManticoreRails
       else
         self.class.manticore_indexer.index_records([id])
       end
-    rescue => e
+    rescue StandardError => e
       ManticoreRails.configuration.on_error&.call(
         "Failed to index #{self.class.name}##{id}", e
       )
@@ -87,7 +87,7 @@ module ManticoreRails
       return unless manticore_should_index?
 
       self.class.manticore_indexer.delete_records([id])
-    rescue => e
+    rescue StandardError => e
       ManticoreRails.configuration.on_error&.call(
         "Failed to remove #{self.class.name}##{id}", e
       )

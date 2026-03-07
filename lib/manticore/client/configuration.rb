@@ -186,10 +186,11 @@ module ManticoreClient::Client
       yield(self) if block_given?
     end
 
+    DEFAULT_MUTEX = Mutex.new
+
     # The default Configuration object.
     def self.default
-      @@default_mutex ||= Mutex.new
-      @@default_mutex.synchronize { @@default ||= Configuration.new }
+      DEFAULT_MUTEX.synchronize { @@default ||= Configuration.new }
     end
 
     def configure

@@ -41,9 +41,10 @@ module ManticoreClient::Client
       }
     end
 
+    DEFAULT_MUTEX = Mutex.new
+
     def self.default
-      @@default_mutex ||= Mutex.new
-      @@default_mutex.synchronize { @@default ||= ApiClient.new }
+      DEFAULT_MUTEX.synchronize { @@default ||= ApiClient.new }
     end
 
     # Call an API with given options.

@@ -58,6 +58,8 @@ module ManticoreRails
       total
     end
 
+    MAX_ASSOCIATION_DEPTH = 10
+
     private
 
     def extract_field_value(record, field)
@@ -80,8 +82,6 @@ module ManticoreRails
 
       values.compact.join(" ")
     end
-
-    MAX_ASSOCIATION_DEPTH = 10
 
     def collect_values(target, navigations, col, depth = 0)
       return nil if target.nil?
