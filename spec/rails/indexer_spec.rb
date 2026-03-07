@@ -136,6 +136,28 @@ RSpec.describe ManticoreRails::Indexer do
     end
   end
 
+  describe "#check_bulk_response" do
+    it "reports errors via on_error callback" do
+      errors = []
+      ManticoreRails.configuration.on_error = ->(msg, err) { errors << [msg, err.message] }
+
+      response = double("response", errors: true, error: "some docs failed",
+                                    items: [{ "replace" => { "id" => 1, "error" => "bad" } }])
+
+      indexer.send(:check_bulk_response, response)
+
+      expect(errors.size).to eq(1)
+      expect(errors.first.first).to eq("some docs failed")
+    ensure
+      ManticoreRails.configuration.on_error = nil
+    end
+
+    it "does nothing when no errors" do
+      response = double("response", errors: false)
+      expect { indexer.send(:check_bulk_response, response) }.not_to raise_error
+    end
+  end
+
   describe "#delete_records" do
     it "sends a single bulk NDJSON request" do
       index_api = instance_double(ManticoreClient::Client::IndexApi)

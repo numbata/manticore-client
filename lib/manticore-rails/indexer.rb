@@ -40,7 +40,7 @@ module ManticoreRails
         { delete: { index: index.table_name, id: id } }.to_json
       end.join("\n")
 
-      index_api.bulk(ndjson)
+      check_bulk_response(index_api.bulk(ndjson))
     end
 
     def reindex_all(scope: nil, &block)
@@ -130,7 +130,17 @@ module ManticoreRails
           { replace: { index: index.table_name, id: id, doc: rest } }.to_json
         end.join("\n")
 
-        index_api.bulk(ndjson)
+        check_bulk_response(index_api.bulk(ndjson))
+      end
+
+      def check_bulk_response(response)
+        return unless response.respond_to?(:errors) && response.errors
+
+        message = response.respond_to?(:error) && response.error ? response.error : "Bulk operation had errors"
+        ManticoreRails.configuration.on_error&.call(
+          message,
+          StandardError.new(response.items.to_s)
+        )
       end
 
       def index_api
