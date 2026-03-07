@@ -34,7 +34,7 @@ jobs:
     - name: Run tests
       run: bundle exec rspec
       env:
-        MANTICORE_URL: http://localhost:9308
+        MANTICORESEARCH_URI: http://localhost:9308
 
     - name: Build gem
       run: bundle exec rake build
