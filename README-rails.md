@@ -120,6 +120,7 @@ Article.search("ruby on rails")
 Article.search("ruby", with: { status: 1 })
 Article.search("ruby", with: { status: [1, 2] })                          # IN
 Article.search("", with: { published_at: 1.week.ago.to_i..Time.current.to_i }) # range
+Article.search("ruby", without: { status: 0 })                            # exclusion
 
 # Sorting
 Article.search("ruby", order: { published_at: :desc })
@@ -216,16 +217,52 @@ ManticoreRails.healthy?  # => true / false
 
 Returns `true` if ManticoreSearch is reachable, `false` on any connection error.
 
+## Instrumentation
+
+When `ActiveSupport::Notifications` is available, ManticoreRails emits events you can subscribe to:
+
+| Event | Payload | When |
+|-------|---------|------|
+| `search.manticore_rails` | `{ table: }` | Every search query |
+| `bulk.manticore_rails` | `{ table:, count: }` | Bulk replace (index) operations |
+| `delete.manticore_rails` | `{ table:, count: }` | Bulk delete operations |
+
+```ruby
+ActiveSupport::Notifications.subscribe("search.manticore_rails") do |name, start, finish, id, payload|
+  Rails.logger.info "[Manticore] #{payload[:table]} search took #{finish - start}s"
+end
+
+ActiveSupport::Notifications.subscribe("bulk.manticore_rails") do |name, start, finish, id, payload|
+  Rails.logger.info "[Manticore] Indexed #{payload[:count]} docs into #{payload[:table]}"
+end
+```
+
+## Circuit breaker
+
+ManticoreRails tracks consecutive indexing failures and stops attempting to index after reaching `circuit_breaker_threshold` (default: 10). This prevents a ManticoreSearch outage from slowing down every ActiveRecord save.
+
+The circuit resets automatically on the next successful indexing operation.
+
+```ruby
+ManticoreRails.configure do |config|
+  config.circuit_breaker_threshold = 10  # stop after 10 consecutive failures
+end
+
+ManticoreRails.circuit_open?  # => true/false
+```
+
 ## Configuration reference
 
 ```ruby
 ManticoreRails.configure do |config|
-  config.index_prefix    = nil           # prefix for table names (e.g. "test_")
-  config.batch_size      = 1000          # records per batch during reindex
-  config.auto_indexing   = true          # after_commit index/remove callbacks
-  config.async_indexing  = false         # delegate indexing to a background job
-  config.index_job_class = nil           # job class name (string) for async mode
-  config.on_error        = ->(msg, err) { warn "[ManticoreRails] #{msg}: #{err.message}" }
+  config.index_prefix              = nil    # prefix for table names (e.g. "test_")
+  config.batch_size                = 1000   # records per batch during reindex
+  config.auto_indexing             = true   # after_commit index/remove callbacks
+  config.async_indexing            = false  # delegate indexing to a background job
+  config.index_job_class           = nil    # job class name (string) for async mode
+  config.circuit_breaker_threshold = 10     # consecutive failures before circuit opens
+  config.on_error = ->(msg, err) { warn "[ManticoreRails] #{msg}: #{err.message}" }
+  # config.on_error = :raise              # re-raise errors (useful in dev/test)
 end
 ```
 

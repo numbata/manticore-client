@@ -23,6 +23,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Configurable index prefix, batch size, and error handling
 - Custom serialization via `manticore_serialize` override
 - SQL expression fields with `:as` aliases in schema DDL
+- Circuit breaker to pause auto-indexing after consecutive failures
+- `without:` exclusion filters for search queries
+- `on_error = :raise` mode for dev/test environments
+- Missing record detection and logging during `index_records`
+- Frozen index definitions after registration to prevent mutation
+- ActiveSupport::Notifications instrumentation events (`search`, `bulk`, `delete`)
 
 ## manticore-client
 
