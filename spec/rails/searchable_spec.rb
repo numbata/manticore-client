@@ -192,6 +192,64 @@ RSpec.describe ManticoreRails::Searchable do
       ManticoreRails.configuration.index_job_class = nil
     end
 
+    it "does not call record_success! in async mode" do
+      job_class = double("JobClass")
+      allow(job_class).to receive(:perform_later)
+
+      ManticoreRails.configuration.async_indexing = true
+      ManticoreRails.configuration.index_job_class = job_class
+      ManticoreRails.record_failure! # set failure count to 1
+
+      instance = model_class.new
+      instance.manticore_index_record
+
+      # Circuit breaker should NOT have been reset by async enqueue
+      expect(ManticoreRails.circuit_open?).to be(false) # still below threshold
+      # Verify record_success! was not called by checking failure count wasn't reset
+      # Add another failure — if success was called, count would be 1; if not, count is 2
+      ManticoreRails.record_failure!
+      # With threshold=10, 2 failures should not open it
+      expect(ManticoreRails.circuit_open?).to be(false)
+    ensure
+      ManticoreRails.configuration.async_indexing = false
+      ManticoreRails.configuration.index_job_class = nil
+      ManticoreRails.record_success!
+    end
+
+    it "calls record_success! in sync mode" do
+      indexer = instance_double(ManticoreRails::Indexer)
+      allow(ManticoreRails::Indexer).to receive(:new).and_return(indexer)
+      allow(indexer).to receive(:index_records)
+
+      # Set some failures first
+      3.times { ManticoreRails.record_failure! }
+
+      instance = model_class.new
+      instance.manticore_index_record
+
+      # Sync success should reset the failure counter
+      expect(ManticoreRails.circuit_open?).to be(false)
+    ensure
+      ManticoreRails.record_success!
+    end
+
+    it "calls record_failure! when sync indexing raises" do
+      indexer = instance_double(ManticoreRails::Indexer)
+      allow(ManticoreRails::Indexer).to receive(:new).and_return(indexer)
+      allow(indexer).to receive(:index_records).and_raise(StandardError, "connection refused")
+
+      ManticoreRails.configuration.on_error = nil
+
+      instance = model_class.new
+      instance.manticore_index_record
+
+      # Should have recorded one failure
+      expect(ManticoreRails.circuit_open?).to be(false) # 1 < 10
+    ensure
+      ManticoreRails.record_success!
+      ManticoreRails.configuration.reset!
+    end
+
     it "does nothing when auto_indexing is off" do
       indexer = instance_double(ManticoreRails::Indexer)
       allow(ManticoreRails::Indexer).to receive(:new).and_return(indexer)

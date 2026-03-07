@@ -129,8 +129,8 @@ module ManticoreRails
 
       manticore_perform_async_or_sync(:index) do
         self.class.manticore_indexer.index_records([id])
+        ManticoreRails.record_success!
       end
-      ManticoreRails.record_success!
     rescue StandardError => e
       ManticoreRails.record_failure!
       ManticoreRails.configuration.on_error&.call(
@@ -146,8 +146,8 @@ module ManticoreRails
 
       manticore_perform_async_or_sync(:delete) do
         self.class.manticore_indexer.delete_records([id])
+        ManticoreRails.record_success!
       end
-      ManticoreRails.record_success!
     rescue StandardError => e
       ManticoreRails.record_failure!
       ManticoreRails.configuration.on_error&.call(
@@ -157,6 +157,9 @@ module ManticoreRails
 
     private
 
+      # In async mode, the block is NOT executed — only the job is enqueued.
+      # Circuit breaker calls belong inside the block so they only fire
+      # on actual sync execution.
       def manticore_perform_async_or_sync(action)
         config = ManticoreRails.configuration
         if config.async_indexing && config.index_job_class

@@ -210,7 +210,9 @@ module ManticoreRails
           case value
           when Range
             upper_bound = value.exclude_end? ? :lt : :lte
-            bounds = { gte: coerce_filter_value(value.begin), upper_bound => coerce_filter_value(value.end) }
+            bounds = {}
+            bounds[:gte] = coerce_filter_value(value.begin) unless value.begin.nil?
+            bounds[upper_bound] = coerce_filter_value(value.end) unless value.end.nil?
             ManticoreClient::Client::QueryFilter.new(range: { attr => bounds })
           when Array
             ManticoreClient::Client::QueryFilter.new(

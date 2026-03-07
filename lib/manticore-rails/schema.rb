@@ -71,8 +71,12 @@ module ManticoreRails
         def execute(sql)
           client = ManticoreClient::Client::UtilsApi.new
           sql_encoded = URI.encode_www_form_component(sql)
-          response = client.sql("query=#{sql_encoded}", query_params: { mode: "raw" }).first
-          raise "SQL failed: #{sql}\n#{response[:error]}" unless response[:error].empty?
+          results = client.sql("query=#{sql_encoded}", query_params: { mode: "raw" })
+          response = results&.first
+          raise "SQL failed: #{sql}\nEmpty response from ManticoreSearch" unless response
+
+          error = response[:error]
+          raise "SQL failed: #{sql}\n#{error}" if error && !error.empty?
 
           response[:data]
         end

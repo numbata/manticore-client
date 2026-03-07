@@ -111,6 +111,22 @@ RSpec.describe ManticoreRails::Schema do
 
       expect { described_class.create_table(index) }.to raise_error(RuntimeError, /SQL failed/)
     end
+
+    it "raises when ManticoreSearch returns an empty response" do
+      utils_api = instance_double(ManticoreClient::Client::UtilsApi)
+      allow(ManticoreClient::Client::UtilsApi).to receive(:new).and_return(utils_api)
+      allow(utils_api).to receive(:sql).and_return([])
+
+      expect { described_class.create_table(index) }.to raise_error(RuntimeError, /Empty response/)
+    end
+
+    it "raises when ManticoreSearch returns nil" do
+      utils_api = instance_double(ManticoreClient::Client::UtilsApi)
+      allow(ManticoreClient::Client::UtilsApi).to receive(:new).and_return(utils_api)
+      allow(utils_api).to receive(:sql).and_return(nil)
+
+      expect { described_class.create_table(index) }.to raise_error(RuntimeError, /Empty response/)
+    end
   end
 
   describe ".drop_table" do
