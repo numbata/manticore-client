@@ -65,6 +65,46 @@ RSpec.describe ManticoreRails::Searchable do
       index = model_class.manticore_index
       expect(index.attributes.map(&:name)).to contain_exactly(:id, :channel_id)
     end
+
+    it "deduplicates reindex callbacks for the same root association" do
+      callback_count = 0
+      inverse = double("inverse", name: :episode)
+      reflection = double("reflection", inverse_of: inverse)
+      klass = Class.new do
+        def self.class_eval(&block); end
+      end
+      allow(reflection).to receive(:klass).and_return(klass)
+      allow(klass).to receive(:class_eval) { callback_count += 1 }
+
+      reindex_model = Class.new do
+        def self.table_name
+          "reindex_test"
+        end
+
+        def self.name
+          "ReindexTest"
+        end
+
+        def self.after_commit(*, **); end
+
+        def self.reflect_on_association(_name)
+          nil
+        end
+
+        include ManticoreRails::Searchable
+      end
+
+      allow(reindex_model).to receive(:reflect_on_association).and_return(reflection)
+
+      ManticoreRails.registry.reset!
+      reindex_model.define_manticore_index do
+        indexes :title
+        reindex_on_change :tags
+        reindex_on_change "tags.subtags"
+      end
+
+      expect(callback_count).to eq(1)
+    end
   end
 
   describe ".manticore_index" do
