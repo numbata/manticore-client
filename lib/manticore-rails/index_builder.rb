@@ -48,14 +48,7 @@ module ManticoreRails
     private
 
     def normalize_column(col)
-      case col
-      when Symbol
-        col
-      when String, AssociationProxy
-        col.to_s
-      else
-        col.to_s
-      end
+      col.is_a?(Symbol) ? col : col.to_s
     end
 
     def method_missing(name, *args)
