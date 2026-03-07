@@ -15,7 +15,7 @@ RSpec.describe ManticoreRails::Searcher do
   describe ".search" do
     it "returns a Result" do
       result = described_class.search(index, "test query")
-      expect(result).to be_a(ManticoreRails::Result)
+      expect(result).to be_a(ManticoreRails::Searcher::Result)
     end
   end
 
@@ -27,7 +27,7 @@ RSpec.describe ManticoreRails::Searcher do
   end
 end
 
-RSpec.describe ManticoreRails::Result do
+RSpec.describe ManticoreRails::Searcher::Result do
   let(:model_class) { Struct.new(:table_name).new("episodes") }
   let(:index) { ManticoreRails::Index.new(model_class) }
   let(:search_api) { instance_double(ManticoreClient::Client::SearchApi) }

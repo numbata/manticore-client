@@ -83,14 +83,14 @@ RSpec.describe ManticoreRails::Searchable do
   describe ".search" do
     it "delegates to Searcher" do
       result = model_class.search("test query")
-      expect(result).to be_a(ManticoreRails::Result)
+      expect(result).to be_a(ManticoreRails::Searcher::Result)
     end
   end
 
   describe ".search_for_ids" do
     it "delegates to Searcher with ids_only" do
       result = model_class.search_for_ids("test query")
-      expect(result).to be_a(ManticoreRails::Result)
+      expect(result).to be_a(ManticoreRails::Searcher::Result)
       expect(result.options[:ids_only]).to be(true)
     end
   end
