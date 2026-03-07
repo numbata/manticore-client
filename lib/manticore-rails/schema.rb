@@ -24,10 +24,10 @@ module ManticoreRails
 
       def create_table_sql(index)
         columns = (index.fields + index.attributes).reject(&:sql?).map do |col|
-          "#{col.name} #{MANTICORE_TYPE_MAP[col.manticore_type] || "string"}"
+          "#{col.name} #{MANTICORE_TYPE_MAP[col.manticore_type] || 'string'}"
         end
 
-        sql = "CREATE TABLE IF NOT EXISTS #{index.table_name} (#{columns.join(", ")})"
+        sql = "CREATE TABLE IF NOT EXISTS #{index.table_name} (#{columns.join(', ')})"
 
         if index.properties.any?
           options = index.properties.map do |k, v|
@@ -48,14 +48,14 @@ module ManticoreRails
 
       private
 
-      def execute(sql)
-        client = ManticoreClient::Client::UtilsApi.new
-        sql_encoded = URI.encode_www_form_component(sql)
-        response = client.sql("query=#{sql_encoded}", query_params: { mode: "raw" }).first
-        raise "SQL failed: #{sql}\n#{response[:error]}" unless response[:error].empty?
+        def execute(sql)
+          client = ManticoreClient::Client::UtilsApi.new
+          sql_encoded = URI.encode_www_form_component(sql)
+          response = client.sql("query=#{sql_encoded}", query_params: { mode: "raw" }).first
+          raise "SQL failed: #{sql}\n#{response[:error]}" unless response[:error].empty?
 
-        response[:data]
-      end
+          response[:data]
+        end
     end
   end
 end

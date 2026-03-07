@@ -23,7 +23,7 @@ RSpec.describe ManticoreRails::Indexer do
   describe "#serialize" do
     it "serializes simple fields" do
       record = double("record", id: 1, name: "Test Episode", description: "A description",
-                       beginning: Time.new(2024, 1, 15, 12, 0, 0), channel_id: 42)
+                                beginning: Time.new(2024, 1, 15, 12, 0, 0), channel_id: 42)
 
       doc = indexer.serialize(record)
 
@@ -35,7 +35,7 @@ RSpec.describe ManticoreRails::Indexer do
     it "coerces Time attributes to integers" do
       time = Time.new(2024, 1, 15, 12, 0, 0)
       record = double("record", id: 1, name: "Test", description: "Desc",
-                       beginning: time, channel_id: 42)
+                                beginning: time, channel_id: 42)
 
       doc = indexer.serialize(record)
       expect(doc["beginning"]).to eq(time.to_i)
@@ -44,7 +44,7 @@ RSpec.describe ManticoreRails::Indexer do
     it "coerces boolean true to 1 and false to 0" do
       index.add_attribute(:active, type: :boolean)
       record = double("record", id: 1, name: "Test", description: "Desc",
-                       beginning: Time.now, channel_id: 42, active: true)
+                                beginning: Time.now, channel_id: 42, active: true)
 
       doc = indexer.serialize(record)
       expect(doc["active"]).to eq(1)
@@ -52,7 +52,7 @@ RSpec.describe ManticoreRails::Indexer do
 
     it "coerces nil numeric attributes to 0" do
       record = double("record", id: 1, name: "Test", description: "Desc",
-                       beginning: nil, channel_id: nil)
+                                beginning: nil, channel_id: nil)
 
       doc = indexer.serialize(record)
       expect(doc["beginning"]).to eq(0)
@@ -62,7 +62,7 @@ RSpec.describe ManticoreRails::Indexer do
     it "skips SQL fields (returns nil, compacted out)" do
       index.add_field("(SELECT GROUP_CONCAT(...) FROM ...)", as: :custom_field)
       record = double("record", id: 1, name: "Test", description: "Desc",
-                       beginning: Time.now, channel_id: 1)
+                                beginning: Time.now, channel_id: 1)
 
       doc = indexer.serialize(record)
       expect(doc).not_to have_key("custom_field")
@@ -76,7 +76,7 @@ RSpec.describe ManticoreRails::Indexer do
       tags = [tag1, tag2]
 
       record = double("record", id: 1, name: "Test", description: "Desc",
-                       beginning: Time.now, channel_id: 1, tags: tags)
+                                beginning: Time.now, channel_id: 1, tags: tags)
 
       doc = indexer.serialize(record)
       expect(doc["tags_name"]).to eq("News Sports")
@@ -89,7 +89,7 @@ RSpec.describe ManticoreRails::Indexer do
       index.add_field(deep_path, as: :deep_field)
 
       root = double("root", id: 1, name: "Test", description: "Desc",
-                     beginning: Time.now, channel_id: 1)
+                            beginning: Time.now, channel_id: 1)
 
       current = root
       parts.each_with_index do |assoc, i|
@@ -141,7 +141,7 @@ RSpec.describe ManticoreRails::Indexer do
   describe "#index_records" do
     it "loads records and bulk upserts" do
       record = double("record", id: 1, name: "Test", description: "Desc",
-                       beginning: Time.now, channel_id: 1)
+                                beginning: Time.now, channel_id: 1)
 
       scope = double("scope", includes: [record])
       allow(index).to receive(:model_class).and_return(double("ar_class", table_name: "episodes", where: scope))

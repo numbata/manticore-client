@@ -27,7 +27,7 @@ RSpec.describe ManticoreRails::AssociationProxy do
     subject(:proxy) { described_class.new(:transcript) }
 
     it "returns a string with parenthesized argument" do
-      result = proxy.send(:approved_text)
+      proxy.send(:approved_text)
       # transcript(:approved_text) style - but via method call on proxy
       # This tests the proxy.method(arg) path
     end

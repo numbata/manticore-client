@@ -47,21 +47,21 @@ module ManticoreRails
 
     private
 
-    def normalize_column(col)
-      col.is_a?(Symbol) ? col : col.to_s
-    end
-
-    def method_missing(name, *args)
-      if args.any?
-        # tags(:company_id) → "tags(company_id)"
-        "#{name}(#{args.first})"
-      else
-        AssociationProxy.new(name)
+      def normalize_column(col)
+        col.is_a?(Symbol) ? col : col.to_s
       end
-    end
 
-    def respond_to_missing?(_name, _include_private = false)
-      true
-    end
+      def method_missing(name, *args)
+        if args.any?
+          # tags(:company_id) → "tags(company_id)"
+          "#{name}(#{args.first})"
+        else
+          AssociationProxy.new(name)
+        end
+      end
+
+      def respond_to_missing?(_name, _include_private = false)
+        true
+      end
   end
 end

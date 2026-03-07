@@ -26,8 +26,8 @@ module ManticoreRails
 
     def index_records(ids)
       records = index.model_class
-        .where(id: ids)
-        .includes(*index.referenced_associations)
+                     .where(id: ids)
+                     .includes(*index.referenced_associations)
 
       docs = records.map { |r| serialize(r) }
       bulk_replace(docs)
@@ -62,75 +62,73 @@ module ManticoreRails
 
     private
 
-    def extract_field_value(record, field)
-      if field.sql?
-        nil
-      elsif field.association?
-        extract_association_value(record, field)
-      else
-        record.public_send(field.column_name)
-      end
-    end
-
-    def extract_association_value(record, field)
-      path = field.association_path
-      col = path.last
-      navigations = path[0...-1]
-
-      values = collect_values(record, navigations, col)
-      return nil if values.nil? || values.empty?
-
-      values.compact.join(" ")
-    end
-
-    def collect_values(target, navigations, col, depth = 0)
-      return nil if target.nil?
-      raise "Circular association detected (depth > #{MAX_ASSOCIATION_DEPTH})" if depth > MAX_ASSOCIATION_DEPTH
-
-      if navigations.empty?
-        return [target.public_send(col)]
+      def extract_field_value(record, field)
+        if field.sql?
+          nil
+        elsif field.association?
+          extract_association_value(record, field)
+        else
+          record.public_send(field.column_name)
+        end
       end
 
-      current_assoc = navigations.first
-      remaining = navigations[1..]
-      result = target.public_send(current_assoc)
-      return nil if result.nil?
+      def extract_association_value(record, field)
+        path = field.association_path
+        col = path.last
+        navigations = path[0...-1]
 
-      if result.respond_to?(:flat_map)
-        result.flat_map { |item| collect_values(item, remaining, col, depth + 1) || [] }
-      else
-        collect_values(result, remaining, col, depth + 1)
+        values = collect_values(record, navigations, col)
+        return nil if values.nil? || values.empty?
+
+        values.compact.join(" ")
       end
-    end
 
-    def coerce_attribute(value, attr)
-      case value
-      when Time, DateTime
-        value.to_i
-      when TrueClass
-        1
-      when FalseClass
-        0
-      when NilClass
-        %i[integer bigint timestamp].include?(attr.manticore_type) ? 0 : nil
-      else
-        value
+      def collect_values(target, navigations, col, depth = 0)
+        return nil if target.nil?
+        raise "Circular association detected (depth > #{MAX_ASSOCIATION_DEPTH})" if depth > MAX_ASSOCIATION_DEPTH
+
+        return [target.public_send(col)] if navigations.empty?
+
+        current_assoc = navigations.first
+        remaining = navigations[1..]
+        result = target.public_send(current_assoc)
+        return nil if result.nil?
+
+        if result.respond_to?(:flat_map)
+          result.flat_map { |item| collect_values(item, remaining, col, depth + 1) || [] }
+        else
+          collect_values(result, remaining, col, depth + 1)
+        end
       end
-    end
 
-    def bulk_replace(docs)
-      return if docs.empty?
+      def coerce_attribute(value, attr)
+        case value
+        when Time, DateTime
+          value.to_i
+        when TrueClass
+          1
+        when FalseClass
+          0
+        when NilClass
+          %i[integer bigint timestamp].include?(attr.manticore_type) ? 0 : nil
+        else
+          value
+        end
+      end
 
-      ndjson = docs.map do |doc|
-        body = { replace: { index: index.table_name, id: doc["id"], doc: doc.except("id") } }
-        body.to_json
-      end.join("\n")
+      def bulk_replace(docs)
+        return if docs.empty?
 
-      index_api.bulk(ndjson)
-    end
+        ndjson = docs.map do |doc|
+          body = { replace: { index: index.table_name, id: doc["id"], doc: doc.except("id") } }
+          body.to_json
+        end.join("\n")
 
-    def index_api
-      @index_api ||= ManticoreClient::Client::IndexApi.new
-    end
+        index_api.bulk(ndjson)
+      end
+
+      def index_api
+        @index_api ||= ManticoreClient::Client::IndexApi.new
+      end
   end
 end

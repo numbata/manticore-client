@@ -74,117 +74,117 @@ module ManticoreRails
 
       private
 
-      def populate
-        return if @populated
+        def populate
+          return if @populated
 
-        response = execute_search
+          response = execute_search
 
-        hits = response.hits
+          hits = response.hits
 
-        @total_entries = hits.total || 0
-        @matches = hits.hits || []
+          @total_entries = hits.total || 0
+          @matches = hits.hits || []
 
-        if options[:ids_only]
-          @items = @matches.map { |h| h._id.to_i }
-        else
-          ids = @matches.map { |h| h._id.to_i }
-          @items = if ids.empty?
-            []
+          if options[:ids_only]
+            @items = @matches.map { |h| h._id.to_i }
           else
-            records_by_id = index.model_class.where(id: ids).index_by(&:id)
-            ids.filter_map { |id| records_by_id[id] }
+            ids = @matches.map { |h| h._id.to_i }
+            @items = if ids.empty?
+              []
+            else
+              records_by_id = index.model_class.where(id: ids).index_by(&:id)
+              ids.filter_map { |id| records_by_id[id] }
+            end
           end
+
+          @populated = true
         end
 
-        @populated = true
-      end
-
-      def execute_search
-        api = ManticoreClient::Client::SearchApi.new
-        request = build_search_request
-        api.search(request)
-      end
-
-      def build_search_request
-        query_params = build_query
-        sort_params = options[:order] ? build_sort(options[:order]) : nil
-
-        attrs = {
-          table: index.table_name,
-          query: query_params,
-          limit: per_page,
-          offset: offset
-        }
-        attrs[:sort] = sort_params if sort_params
-
-        ManticoreClient::Client::SearchRequest.new(**attrs)
-      end
-
-      def build_query
-        # Base query
-        base = if query && !query.empty?
-          ManticoreClient::Client::SearchQuery.new(query_string: query)
-        else
-          ManticoreClient::Client::SearchQuery.new(match_all: {})
+        def execute_search
+          api = ManticoreClient::Client::SearchApi.new
+          request = build_search_request
+          api.search(request)
         end
 
-        # Add filters from :with option
-        if options[:with].is_a?(Hash) && !options[:with].empty?
-          filter_queries = options[:with].map { |attr, value| build_filter(attr, value) }
-          base_filter = if base.query_string
-            ManticoreClient::Client::QueryFilter.new(query_string: base.query_string)
+        def build_search_request
+          query_params = build_query
+          sort_params = options[:order] ? build_sort(options[:order]) : nil
+
+          attrs = {
+            table: index.table_name,
+            query: query_params,
+            limit: per_page,
+            offset: offset
+          }
+          attrs[:sort] = sort_params if sort_params
+
+          ManticoreClient::Client::SearchRequest.new(**attrs)
+        end
+
+        def build_query
+          # Base query
+          base = if query && !query.empty?
+            ManticoreClient::Client::SearchQuery.new(query_string: query)
           else
-            ManticoreClient::Client::QueryFilter.new(match_all: base.match_all)
+            ManticoreClient::Client::SearchQuery.new(match_all: {})
           end
-          ManticoreClient::Client::SearchQuery.new(
-            bool: ManticoreClient::Client::BoolFilter.new(
-              must: [base_filter, *filter_queries]
+
+          # Add filters from :with option
+          if options[:with].is_a?(Hash) && !options[:with].empty?
+            filter_queries = options[:with].map { |attr, value| build_filter(attr, value) }
+            base_filter = if base.query_string
+              ManticoreClient::Client::QueryFilter.new(query_string: base.query_string)
+            else
+              ManticoreClient::Client::QueryFilter.new(match_all: base.match_all)
+            end
+            ManticoreClient::Client::SearchQuery.new(
+              bool: ManticoreClient::Client::BoolFilter.new(
+                must: [base_filter, *filter_queries]
+              )
             )
-          )
-        else
-          base
-        end
-      end
-
-      def build_filter(attr, value)
-        case value
-        when Range
-          ManticoreClient::Client::QueryFilter.new(
-            range: { attr => { gte: coerce_filter_value(value.begin), lte: coerce_filter_value(value.end) } }
-          )
-        when Array
-          ManticoreClient::Client::QueryFilter.new(
-            _in: { attr => value.map { |v| coerce_filter_value(v) } }
-          )
-        else
-          ManticoreClient::Client::QueryFilter.new(
-            equals: { attr => coerce_filter_value(value) }
-          )
-        end
-      end
-
-      def build_sort(order)
-        case order
-        when Hash
-          order.map { |field, dir| { field => dir.to_s } }
-        when String
-          order.split(",").map do |part|
-            field, dir = part.strip.split(/\s+/)
-            { field => (dir || "asc").downcase }
+          else
+            base
           end
-        else
-          []
         end
-      end
 
-      def coerce_filter_value(value)
-        case value
-        when Time, DateTime
-          value.to_i
-        else
-          value
+        def build_filter(attr, value)
+          case value
+          when Range
+            ManticoreClient::Client::QueryFilter.new(
+              range: { attr => { gte: coerce_filter_value(value.begin), lte: coerce_filter_value(value.end) } }
+            )
+          when Array
+            ManticoreClient::Client::QueryFilter.new(
+              _in: { attr => value.map { |v| coerce_filter_value(v) } }
+            )
+          else
+            ManticoreClient::Client::QueryFilter.new(
+              equals: { attr => coerce_filter_value(value) }
+            )
+          end
         end
-      end
+
+        def build_sort(order)
+          case order
+          when Hash
+            order.map { |field, dir| { field => dir.to_s } }
+          when String
+            order.split(",").map do |part|
+              field, dir = part.strip.split(/\s+/)
+              { field => (dir || "asc").downcase }
+            end
+          else
+            []
+          end
+        end
+
+        def coerce_filter_value(value)
+          case value
+          when Time, DateTime
+            value.to_i
+          else
+            value
+          end
+        end
     end
   end
 end

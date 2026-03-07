@@ -104,7 +104,7 @@ RSpec.describe ManticoreRails::Schema do
 
       described_class.drop_table(index)
 
-      expect(utils_api).to have_received(:sql) do |body, **opts|
+      expect(utils_api).to have_received(:sql) do |body, **_opts|
         decoded = URI.decode_www_form_component(body.sub("query=", ""))
         expect(decoded).to eq("DROP TABLE IF EXISTS episodes")
       end
