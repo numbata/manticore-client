@@ -7,10 +7,14 @@ module ManticoreRails
     def initialize
       @mutex = Mutex.new
       @indexes = {}
+      @by_table = {}
     end
 
     def register(klass, index)
-      @mutex.synchronize { @indexes[klass] = index }
+      @mutex.synchronize do
+        @indexes[klass] = index
+        @by_table[index.table_name] = index
+      end
     end
 
     def all
@@ -22,11 +26,14 @@ module ManticoreRails
     end
 
     def find_by_table(table_name)
-      @mutex.synchronize { @indexes.values.find { |i| i.table_name == table_name } }
+      @mutex.synchronize { @by_table[table_name] }
     end
 
     def reset!
-      @mutex.synchronize { @indexes.clear }
+      @mutex.synchronize do
+        @indexes.clear
+        @by_table.clear
+      end
     end
   end
 end
