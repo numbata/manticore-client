@@ -51,7 +51,6 @@ module ManticoreRails
           inverse = reflection.inverse_of
           next unless inverse
 
-          indexed_class_name = name
           inverse_name = inverse.name
 
           reflection.klass.class_eval do
@@ -72,7 +71,7 @@ module ManticoreRails
 
       config = ManticoreRails.configuration
       if config.async_indexing && config.index_job_class
-        job_class = Object.const_get(config.index_job_class)
+        job_class = config.index_job_class.is_a?(String) ? config.index_job_class.constantize : config.index_job_class
         job_class.perform_later(self.class.name, id)
       else
         self.class.manticore_indexer.index_records([id])
