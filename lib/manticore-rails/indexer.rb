@@ -55,6 +55,10 @@ module ManticoreRails
         bulk_replace(docs)
         total += docs.size
         block&.call(total)
+      rescue StandardError => e
+        ManticoreRails.configuration.on_error&.call(
+          "Batch failed during reindex of #{index.table_name}", e
+        )
       end
       total
     end
