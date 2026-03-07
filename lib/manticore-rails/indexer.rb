@@ -73,6 +73,10 @@ module ManticoreRails
         end
       end
 
+      # NOTE: Association values are always joined into a space-separated string.
+      # This is appropriate for full-text fields but means association-backed
+      # attributes (e.g. datetime or integer) will be coerced as strings.
+      # Use manticore_serialize for typed association attributes.
       def extract_association_value(record, field)
         path = field.association_path
         col = path.last
