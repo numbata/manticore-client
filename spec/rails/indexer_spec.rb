@@ -82,6 +82,26 @@ RSpec.describe ManticoreRails::Indexer do
       expect(doc["tags_name"]).to eq("News Sports")
     end
 
+    it "raises on deeply nested circular associations" do
+      # Build a chain deeper than MAX_ASSOCIATION_DEPTH
+      parts = (1..12).map { |i| "assoc#{i}" }
+      deep_path = (parts + ["name"]).join(".")
+      index.add_field(deep_path, as: :deep_field)
+
+      root = double("root", id: 1, name: "Test", description: "Desc",
+                     beginning: Time.now, channel_id: 1)
+
+      current = root
+      parts.each_with_index do |assoc, i|
+        child = double("child#{i}")
+        allow(current).to receive(assoc.to_sym).and_return(child)
+        current = child
+      end
+      allow(current).to receive(:name).and_return("leaf")
+
+      expect { indexer.serialize(root) }.to raise_error(RuntimeError, /Circular association detected/)
+    end
+
     it "uses manticore_serialize override when available" do
       custom_doc = { "id" => 1, "name" => "Custom" }
       record = double("record", manticore_serialize: custom_doc)

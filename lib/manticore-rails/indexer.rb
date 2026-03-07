@@ -81,8 +81,11 @@ module ManticoreRails
       values.compact.join(" ")
     end
 
-    def collect_values(target, navigations, col)
+    MAX_ASSOCIATION_DEPTH = 10
+
+    def collect_values(target, navigations, col, depth = 0)
       return nil if target.nil?
+      raise "Circular association detected (depth > #{MAX_ASSOCIATION_DEPTH})" if depth > MAX_ASSOCIATION_DEPTH
 
       if navigations.empty?
         return [target.public_send(col)]
@@ -94,9 +97,9 @@ module ManticoreRails
       return nil if result.nil?
 
       if result.respond_to?(:flat_map)
-        result.flat_map { |item| collect_values(item, remaining, col) || [] }
+        result.flat_map { |item| collect_values(item, remaining, col, depth + 1) || [] }
       else
-        collect_values(result, remaining, col)
+        collect_values(result, remaining, col, depth + 1)
       end
     end
 
