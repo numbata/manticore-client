@@ -54,5 +54,9 @@ module ManticoreRails
     def table_name_for(name)
       [index_prefix, name].compact.join
     end
+
+    def reset!
+      initialize
+    end
   end
 end

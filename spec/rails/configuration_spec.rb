@@ -97,6 +97,26 @@ RSpec.describe ManticoreRails::Configuration do
     end
   end
 
+  describe "#reset!" do
+    it "restores all defaults" do
+      config.index_prefix = "test_"
+      config.batch_size = 500
+      config.auto_indexing = false
+      config.async_indexing = true
+      config.on_error = :raise
+      config.circuit_breaker_threshold = 99
+
+      config.reset!
+
+      expect(config.index_prefix).to be_nil
+      expect(config.batch_size).to eq(1000)
+      expect(config.auto_indexing).to be(true)
+      expect(config.async_indexing).to be(false)
+      expect(config.on_error).to be_a(Proc)
+      expect(config.circuit_breaker_threshold).to eq(10)
+    end
+  end
+
   describe "#table_name_for" do
     context "without prefix" do
       it "returns the name as-is" do
