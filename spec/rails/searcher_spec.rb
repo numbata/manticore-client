@@ -39,10 +39,10 @@ RSpec.describe ManticoreRails::Searcher::Result do
 
   def mock_search_response(total:, hits: [])
     hit_objects = hits.map do |h|
-      double("hit", _id: h[:id].to_s, _score: 1, _source: h[:source] || {})
+      instance_double(ManticoreClient::Client::HitsHits, _id: h[:id].to_s, _score: 1, _source: h[:source] || {})
     end
-    hits_obj = double("hits", total: total, hits: hit_objects)
-    double("response", hits: hits_obj)
+    hits_obj = instance_double(ManticoreClient::Client::SearchResponseHits, total: total, hits: hit_objects)
+    instance_double(ManticoreClient::Client::SearchResponse, hits: hits_obj)
   end
 
   def stub_search(total:, hits: [])

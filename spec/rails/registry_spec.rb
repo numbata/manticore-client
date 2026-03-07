@@ -7,10 +7,10 @@ RSpec.describe ManticoreRails::Registry do
 
   after { registry.reset! }
 
-  let(:fake_index) { double("Index", table_name: "articles", freeze!: nil) }
-  let(:another_index) { double("Index", table_name: "users", freeze!: nil) }
-  let(:klass) { Class.new }
-  let(:another_klass) { Class.new }
+  let(:klass) { Class.new { def self.table_name = "articles" } }
+  let(:another_klass) { Class.new { def self.table_name = "users" } }
+  let(:fake_index) { ManticoreRails::Index.new(klass) }
+  let(:another_index) { ManticoreRails::Index.new(another_klass) }
 
   describe "#register" do
     it "stores an index for a class" do

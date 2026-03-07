@@ -57,7 +57,9 @@ Metrics/ClassLength:
 
 RSpec/VerifiedDoubles:
   Exclude:
-    - 'spec/rails/**/*'
+    - 'spec/rails/searchable_spec.rb'
+    - 'spec/rails/indexer_spec.rb'
+    - 'spec/rails/searcher_spec.rb'
 
 RSpec/SpecFilePathFormat:
   Exclude:

@@ -150,8 +150,11 @@ RSpec.describe ManticoreRails::Indexer do
       errors = []
       ManticoreRails.configuration.on_error = ->(msg, err) { errors << [msg, err.message] }
 
-      response = double("response", errors: true, error: "some docs failed",
-                                    items: [{ "replace" => { "id" => 1, "error" => "bad" } }])
+      response = instance_double(
+        ManticoreClient::Client::BulkResponse,
+        errors: true, error: "some docs failed",
+        items: [{ "replace" => { "id" => 1, "error" => "bad" } }]
+      )
 
       indexer.send(:check_bulk_response, response)
 
@@ -162,7 +165,7 @@ RSpec.describe ManticoreRails::Indexer do
     end
 
     it "does nothing when no errors" do
-      response = double("response", errors: false)
+      response = instance_double(ManticoreClient::Client::BulkResponse, errors: false)
       expect { indexer.send(:check_bulk_response, response) }.not_to raise_error
     end
   end
