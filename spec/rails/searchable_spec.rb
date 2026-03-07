@@ -41,12 +41,14 @@ RSpec.describe ManticoreRails::Searchable do
 
   before do
     ManticoreRails.configuration.index_prefix = nil
+    ManticoreRails.record_success! # reset circuit breaker
     ManticoreRails.registry.reset!
     # Re-trigger define_manticore_index by re-including
     model_class
   end
 
   after do
+    ManticoreRails.record_success!
     ManticoreRails.registry.reset!
   end
 
