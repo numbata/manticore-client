@@ -56,7 +56,8 @@ module ManticoreRails
     def sql?
       column.is_a?(String) && (
         column.strip.start_with?("(") ||
-        column.match?(/\b(?:SELECT|CAST|IF|CONVERT|GROUP_CONCAT|CONCAT|LOWER|UPPER|UNIX_TIMESTAMP)\b/i)
+        column.match?(/\b(?:SELECT|CAST|IF|CONVERT|GROUP_CONCAT|CONCAT|LOWER|UPPER|UNIX_TIMESTAMP)\b/i) ||
+        column.match?(/\A\w+\(.*\)\z/)
       )
     end
 

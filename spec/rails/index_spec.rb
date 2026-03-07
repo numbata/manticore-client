@@ -227,6 +227,26 @@ RSpec.describe ManticoreRails::Field do
     end
   end
 
+  describe "function-style column like 'transcript(approved_text)'" do
+    subject(:field) { described_class.new("transcript(approved_text)", as: :transcript_text) }
+
+    it "is sql" do
+      expect(field.sql?).to be(true)
+    end
+
+    it "is not an association" do
+      expect(field.association?).to be(false)
+    end
+
+    it "is not a method call" do
+      expect(field.method_call?).to be(false)
+    end
+
+    it "uses :as for name" do
+      expect(field.name).to eq(:transcript_text)
+    end
+  end
+
   describe "nested association like 'anchors.dvags'" do
     subject(:field) { described_class.new("anchors.dvags") }
 

@@ -211,8 +211,8 @@ RSpec.describe ManticoreRails::IndexBuilder do
       expect(names).to eq(%i[name description tags_name anchors_title transcript_approved_text])
 
       sql_fields = index.fields.select(&:sql?)
-      expect(sql_fields.size).to eq(1)
-      expect(sql_fields.first.name).to eq(:anchors_title)
+      expect(sql_fields.size).to eq(2)
+      expect(sql_fields.map(&:name)).to eq(%i[anchors_title transcript_approved_text])
 
       assoc_fields = index.fields.select(&:association?)
       expect(assoc_fields.size).to eq(1)
