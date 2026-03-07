@@ -3,7 +3,7 @@
 Gem::Specification.new do |spec|
   spec.name = "manticore-client"
   spec.version = File.read(File.expand_path("lib/manticore/client/version.rb", __dir__))
-    .match(/VERSION\s*=\s*"([^"]+)"/)[1]
+                     .match(/VERSION\s*=\s*"([^"]+)"/)[1]
   spec.platform = Gem::Platform::RUBY
   spec.authors = ["OpenAPI-Generator"]
   spec.email = ["subbota@gmail.com"]

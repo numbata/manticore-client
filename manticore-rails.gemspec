@@ -3,7 +3,7 @@
 Gem::Specification.new do |spec|
   spec.name = "manticore-rails"
   spec.version = File.read(File.expand_path("lib/manticore-rails/version.rb", __dir__))
-    .match(/VERSION\s*=\s*"([^"]+)"/)[1]
+                     .match(/VERSION\s*=\s*"([^"]+)"/)[1]
   spec.platform = Gem::Platform::RUBY
   spec.authors = ["Aleksandr Subbota"]
   spec.email = ["subbota@gmail.com"]
@@ -21,14 +21,14 @@ Gem::Specification.new do |spec|
     "rubygems_mfa_required" => "true"
   }
 
-  spec.add_dependency "manticore-client", "~> 1.0"
   spec.add_dependency "activerecord", ">= 6.0"
   spec.add_dependency "activesupport", ">= 6.0"
+  spec.add_dependency "manticore-client", "~> 1.0"
   spec.add_dependency "zeitwerk"
 
   spec.files = %w[LICENSE.txt README-rails.md] + Dir.glob("lib/manticore-rails.rb") +
-    Dir.glob("lib/manticore-rails/**/*.rb") +
-    Dir.glob("lib/tasks/**/*.rake")
+               Dir.glob("lib/manticore-rails/**/*.rb") +
+               Dir.glob("lib/tasks/**/*.rake")
 
   spec.executables = []
   spec.require_paths = ["lib"]

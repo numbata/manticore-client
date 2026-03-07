@@ -56,7 +56,11 @@ namespace :manticore do
         puts "==> #{index.model_class.name} (#{index.table_name})"
 
         print "    Dropping table... "
-        ManticoreRails::Schema.drop_table(index) rescue nil
+        begin
+          ManticoreRails::Schema.drop_table(index)
+        rescue StandardError
+          nil
+        end
         puts "done"
 
         print "    Creating table... "
@@ -72,13 +76,13 @@ namespace :manticore do
   end
 end
 
-def each_index
+def each_index(&block)
   load_all_indexed_models
-  ManticoreRails::Registry.instance.all.each { |index| yield index }
+  ManticoreRails::Registry.instance.all.each(&block)
 end
 
 def load_all_indexed_models
-  ::Rails.application.eager_load! if defined?(::Rails)
+  Rails.application.eager_load! if defined?(Rails)
 end
 
 def reindex_with_progress(index)
@@ -86,7 +90,7 @@ def reindex_with_progress(index)
   total_records = model.count
   puts "    Indexing #{model.name}: #{total_records} records"
 
-  if total_records == 0
+  if total_records.zero?
     puts "    Nothing to index."
     return
   end
@@ -95,9 +99,9 @@ def reindex_with_progress(index)
   indexed = ManticoreRails::Indexer.new(index).reindex_all do |count|
     elapsed = Time.now - started_at
     rate = count / elapsed
-    print "\r    Indexed #{count}/#{total_records} (#{"%.0f" % rate} docs/s)"
+    print "\r    Indexed #{count}/#{total_records} (#{format('%.0f', rate)} docs/s)"
   end
 
   elapsed = Time.now - started_at
-  puts "\r    Indexed #{indexed}/#{total_records} in #{"%.1f" % elapsed}s"
+  puts "\r    Indexed #{indexed}/#{total_records} in #{format('%.1f', elapsed)}s"
 end

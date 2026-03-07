@@ -8,7 +8,7 @@ AllCops:
   Exclude:
     - '**/templates/**/*'
     - '**/vendor/**/*'
-    - 'actionpack/lib/action_dispatch/journey/parser.rb'
+    - '.github/**/*'
     - 'lib/manticore/client/**/*'
 
 Naming/FileName:
@@ -25,14 +25,22 @@ Style/Documentation:
   Exclude:
     - 'lib/manticore-rails/**/*'
     - 'lib/manticore-rails.rb'
+    - 'lib/manticore/client.rb'
+    - 'spec/support/**/*'
 
 Metrics/AbcSize:
   Exclude:
     - 'lib/manticore-rails/**/*'
+    - 'lib/tasks/**/*'
 
 Metrics/MethodLength:
   Exclude:
     - 'lib/manticore-rails/**/*'
+    - 'lib/tasks/**/*'
+
+Metrics/BlockLength:
+  Exclude:
+    - 'lib/tasks/**/*'
 
 Metrics/CyclomaticComplexity:
   Exclude:
