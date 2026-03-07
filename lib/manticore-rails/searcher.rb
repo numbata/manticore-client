@@ -149,9 +149,9 @@ module ManticoreRails
         def build_filter(attr, value)
           case value
           when Range
-            ManticoreClient::Client::QueryFilter.new(
-              range: { attr => { gte: coerce_filter_value(value.begin), lte: coerce_filter_value(value.end) } }
-            )
+            upper_bound = value.exclude_end? ? :lt : :lte
+            bounds = { gte: coerce_filter_value(value.begin), upper_bound => coerce_filter_value(value.end) }
+            ManticoreClient::Client::QueryFilter.new(range: { attr => bounds })
           when Array
             ManticoreClient::Client::QueryFilter.new(
               _in: { attr => value.map { |v| coerce_filter_value(v) } }

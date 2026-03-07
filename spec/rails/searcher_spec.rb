@@ -185,6 +185,16 @@ RSpec.describe ManticoreRails::Searcher::Result do
       end
     end
 
+    it "uses lt for exclusive range end" do
+      stub_search(total: 0)
+      described_class.new(index, "test", with: { beginning: 100...200 }).to_a
+
+      expect(search_api).to have_received(:search) do |request|
+        range_filter = request.query.bool.must.find(&:range)
+        expect(range_filter.range).to eq({ beginning: { gte: 100, lt: 200 } })
+      end
+    end
+
     it "builds array filters using _in" do
       stub_search(total: 0)
       described_class.new(index, "test", with: { channel_id: [1, 2, 3] }).to_a
