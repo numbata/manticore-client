@@ -227,6 +227,39 @@ ManticoreRails.configure do |config|
 end
 ```
 
+## Troubleshooting
+
+**ManticoreSearch is not running / connection refused**
+
+```ruby
+ManticoreRails.healthy?  # => false
+```
+
+Ensure ManticoreSearch is running and `MANTICORESEARCH_URL` points to the correct host.
+
+**Table doesn't exist after adding fields**
+
+After changing `define_manticore_index`, rebuild the schema:
+
+```bash
+rake manticore:schema:rebuild
+rake manticore:index:rebuild
+```
+
+**Reindex a single record**
+
+```ruby
+Article.manticore_indexer.index_records([article.id])
+```
+
+**Search returns stale data**
+
+Associated record changes only trigger reindexing if `reindex_on_change` is declared and the association has an `inverse_of`. Verify both are set.
+
+**High memory during reindex with large associations**
+
+`find_in_batches` with `includes` loads all associated records per batch. For high-cardinality associations (e.g., thousands of tags per record), reduce `batch_size` or use `manticore_serialize` to control the query.
+
 ## License
 
 MIT. See [LICENSE.txt](LICENSE.txt).
