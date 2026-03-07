@@ -13,11 +13,11 @@ module ManticoreRails
 
       doc = { "id" => record.id }
 
-      index.fields.reject(&:sql?).each do |field|
+      index.indexable_fields.each do |field|
         doc[field.name.to_s] = extract_field_value(record, field)
       end
 
-      index.attributes.reject(&:sql?).each do |attr|
+      index.indexable_attributes.each do |attr|
         doc[attr.name.to_s] = coerce_attribute(extract_field_value(record, attr), attr)
       end
 

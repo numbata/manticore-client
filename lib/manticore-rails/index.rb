@@ -28,6 +28,14 @@ module ManticoreRails
       @properties.merge!(hash)
     end
 
+    def indexable_fields
+      @indexable_fields ||= fields.reject(&:sql?)
+    end
+
+    def indexable_attributes
+      @indexable_attributes ||= attributes.reject(&:sql?)
+    end
+
     def table_name
       ManticoreRails.configuration.table_name_for(model_class.table_name)
     end
