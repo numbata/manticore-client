@@ -364,3 +364,34 @@ RSpec.describe ManticoreRails::Attribute do
     end
   end
 end
+
+RSpec.describe ManticoreRails::Index, "#freeze!" do
+  let(:model_class) { Struct.new(:table_name).new("articles") }
+  let(:index) { described_class.new(model_class) }
+
+  before do
+    index.add_field(:title)
+    index.add_attribute(:status, type: :integer)
+    index.freeze!
+  end
+
+  it "prevents adding new fields" do
+    expect { index.add_field(:body) }.to raise_error(FrozenError)
+  end
+
+  it "prevents adding new attributes" do
+    expect { index.add_attribute(:rank, type: :integer) }.to raise_error(FrozenError)
+  end
+
+  it "prevents adding reindex associations" do
+    expect { index.add_reindex_association(:tags) }.to raise_error(FrozenError)
+  end
+
+  it "prevents setting properties" do
+    expect { index.set_property(morphology: "stem_en") }.to raise_error(FrozenError)
+  end
+
+  it "reports frozen? as true" do
+    expect(index.frozen?).to be(true)
+  end
+end

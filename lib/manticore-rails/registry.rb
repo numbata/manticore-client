@@ -11,6 +11,7 @@ module ManticoreRails
     end
 
     def register(klass, index)
+      index.freeze!
       @mutex.synchronize do
         @indexes[klass] = index
         @by_table[index.table_name] = index

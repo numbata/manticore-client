@@ -13,19 +13,40 @@ module ManticoreRails
     end
 
     def add_field(column, options = {})
+      raise FrozenError, "can't modify frozen #{self.class}" if @frozen
+
       @fields << Field.new(column, options)
     end
 
     def add_attribute(column, options = {})
+      raise FrozenError, "can't modify frozen #{self.class}" if @frozen
+
       @attributes << Attribute.new(column, options)
     end
 
     def add_reindex_association(association)
+      raise FrozenError, "can't modify frozen #{self.class}" if @frozen
+
       @reindex_associations << association
     end
 
     def set_property(hash)
+      raise FrozenError, "can't modify frozen #{self.class}" if @frozen
+
       @properties.merge!(hash)
+    end
+
+    def freeze!
+      @frozen = true
+      @fields.freeze
+      @attributes.freeze
+      @properties.freeze
+      @reindex_associations.freeze
+      self
+    end
+
+    def frozen?
+      !!@frozen
     end
 
     def indexable_fields

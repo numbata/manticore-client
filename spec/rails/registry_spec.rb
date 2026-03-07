@@ -7,8 +7,8 @@ RSpec.describe ManticoreRails::Registry do
 
   after { registry.reset! }
 
-  let(:fake_index) { double("Index", table_name: "articles") }
-  let(:another_index) { double("Index", table_name: "users") }
+  let(:fake_index) { double("Index", table_name: "articles", freeze!: nil) }
+  let(:another_index) { double("Index", table_name: "users", freeze!: nil) }
   let(:klass) { Class.new }
   let(:another_klass) { Class.new }
 
