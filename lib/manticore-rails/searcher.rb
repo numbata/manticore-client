@@ -131,13 +131,14 @@ module ManticoreRails
         # Add filters from :with option
         if options[:with].is_a?(Hash) && !options[:with].empty?
           filter_queries = options[:with].map { |attr, value| build_filter(attr, value) }
-          # Wrap in bool.must with the original query + filters
+          base_filter = if base.query_string
+            ManticoreClient::Client::QueryFilter.new(query_string: base.query_string)
+          else
+            ManticoreClient::Client::QueryFilter.new(match_all: base.match_all)
+          end
           ManticoreClient::Client::SearchQuery.new(
             bool: ManticoreClient::Client::BoolFilter.new(
-              must: [
-                ManticoreClient::Client::QueryFilter.new(query_string: base.query_string, match_all: base.match_all),
-                *filter_queries
-              ]
+              must: [base_filter, *filter_queries]
             )
           )
         else
