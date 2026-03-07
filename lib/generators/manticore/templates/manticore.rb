@@ -12,5 +12,5 @@ ManticoreRails.configure do |config|
   # config.index_job_class           = "ManticoreIndexJob"
   # config.circuit_breaker_threshold = 10
   # config.on_error = ->(msg, err) { Rails.logger.error("[ManticoreRails] #{msg}: #{err.message}") }
-  config.on_error = :raise if Rails.env.local?
+  config.on_error = :raise unless Rails.env.production?
 end

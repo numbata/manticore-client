@@ -13,6 +13,12 @@ gem "manticore-rails", "~> 0.1"
 
 This pulls in `manticore-client` (the HTTP layer) automatically.
 
+Then run the generator to create an initializer:
+
+```bash
+rails g manticore:install
+```
+
 ## Quick start
 
 ```ruby
@@ -241,7 +247,11 @@ end
 
 ManticoreRails tracks consecutive indexing failures and stops attempting to index after reaching `circuit_breaker_threshold` (default: 10). This prevents a ManticoreSearch outage from slowing down every ActiveRecord save.
 
-The circuit resets automatically on the next successful indexing operation.
+The circuit resets automatically on the next successful indexing operation. To manually reset it (e.g. after ManticoreSearch recovers):
+
+```ruby
+ManticoreRails.reset_circuit!
+```
 
 ```ruby
 ManticoreRails.configure do |config|

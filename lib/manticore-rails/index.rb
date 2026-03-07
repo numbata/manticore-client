@@ -109,10 +109,6 @@ module ManticoreRails
       !sql? && column.to_s.include?(".")
     end
 
-    def method_call?
-      column.is_a?(Symbol) && !association?
-    end
-
     def association_name
       return nil unless association?
 

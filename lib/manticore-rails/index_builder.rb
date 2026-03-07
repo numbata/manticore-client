@@ -2,8 +2,6 @@
 
 module ManticoreRails
   class IndexBuilder
-    attr_reader :field_definitions, :attribute_definitions, :reindex_association_list, :property_hash
-
     def initialize(&block)
       @field_definitions = []
       @attribute_definitions = []

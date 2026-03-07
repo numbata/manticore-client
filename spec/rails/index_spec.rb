@@ -131,10 +131,6 @@ RSpec.describe ManticoreRails::Field do
       expect(field.association?).to be(false)
     end
 
-    it "is a method call" do
-      expect(field.method_call?).to be(true)
-    end
-
     it "returns nil for association_name" do
       expect(field.association_name).to be_nil
     end
@@ -169,10 +165,6 @@ RSpec.describe ManticoreRails::Field do
 
     it "is not an association" do
       expect(field.association?).to be(false)
-    end
-
-    it "is not a method call" do
-      expect(field.method_call?).to be(false)
     end
 
     it "uses :as for column_name" do
@@ -215,10 +207,6 @@ RSpec.describe ManticoreRails::Field do
       expect(field.sql?).to be(false)
     end
 
-    it "is not a method call" do
-      expect(field.method_call?).to be(false)
-    end
-
     it "returns :tags for association_name" do
       expect(field.association_name).to eq(:tags)
     end
@@ -245,10 +233,6 @@ RSpec.describe ManticoreRails::Field do
 
     it "is not an association" do
       expect(field.association?).to be(false)
-    end
-
-    it "is not a method call" do
-      expect(field.method_call?).to be(false)
     end
 
     it "uses :as for name" do
