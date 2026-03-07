@@ -188,7 +188,8 @@ module ManticoreClient::Client
 
     # The default Configuration object.
     def self.default
-      @@default ||= Configuration.new
+      @@default_mutex ||= Mutex.new
+      @@default_mutex.synchronize { @@default ||= Configuration.new }
     end
 
     def configure
