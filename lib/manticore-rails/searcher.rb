@@ -1,22 +1,51 @@
 # frozen_string_literal: true
 
 module ManticoreRails
+  # Builds and executes search queries against ManticoreSearch.
+  # Returns lazy {Result} objects that defer execution until enumeration.
+  #
+  # @example Full-text search with filters
+  #   Searcher.search(index, "ruby", with: { status: 1 }, page: 2, per_page: 10)
   class Searcher
     class << self
+      # Performs a full-text search and returns hydrated ActiveRecord objects.
+      # @param index [Index] the index definition to search
+      # @param query [String] the search query string
+      # @param options [Hash] search options (+:with+, +:without+, +:order+, +:page+, +:per_page+)
+      # @return [Result] a lazy, enumerable result set
       def search(index, query, options = {})
         Result.new(index, query, options)
       end
 
+      # Performs a full-text search and returns only record IDs.
+      # @param index [Index] the index definition to search
+      # @param query [String] the search query string
+      # @param options [Hash] search options (same as {search})
+      # @return [Result] a lazy result set yielding Integer IDs
       def search_for_ids(index, query, options = {})
         Result.new(index, query, options.merge(ids_only: true))
       end
     end
 
+    # Lazy, enumerable search result set with pagination support.
+    # Defers the actual ManticoreSearch HTTP call until results are accessed.
+    #
+    # @example Iterating results
+    #   result = Searcher.search(index, "test")
+    #   result.each { |record| puts record.title }
+    #   result.total_entries  #=> 42
+    #   result.total_pages    #=> 3
     class Result
       include Enumerable
 
+      # @return [Index] the index definition this result queries
+      # @return [String] the search query string
+      # @return [Hash] the search options
       attr_reader :index, :query, :options
 
+      # @param index [Index]
+      # @param query [String]
+      # @param options [Hash]
       def initialize(index, query, options = {})
         @index = index
         @query = query
@@ -24,53 +53,75 @@ module ManticoreRails
         @populated = false
       end
 
+      # Raw ManticoreSearch hit objects from the response.
+      # @return [Array] raw hits from ManticoreSearch
       def matches
         populate
         @matches
       end
 
+      # Hydrated ActiveRecord records (or IDs if +ids_only+).
+      # @return [Array<ActiveRecord::Base>, Array<Integer>]
       def to_a
         populate
         @items
       end
 
+      # Yields each record (or ID) in the result set.
+      # @yield [record] each hydrated record or ID
       def each(&block)
         to_a.each(&block)
       end
 
-      # Pagination
+      # @!group Pagination
 
+      # The current page number (minimum 1).
+      # @return [Integer]
       def current_page
         page = options[:page].to_i
         [page, 1].max
       end
 
+      # Results per page (minimum 1, default 20).
+      # @return [Integer]
       def per_page
         [(options[:per_page] || options[:limit] || 20).to_i, 1].max
       end
 
+      # The offset for the current page.
+      # @return [Integer]
       def offset
         options[:offset] || ((current_page - 1) * per_page)
       end
 
+      # Total number of matching documents in ManticoreSearch.
+      # @return [Integer]
       def total_entries
         populate
         @total_entries || 0
       end
 
+      # Total number of pages based on {total_entries} and {per_page}.
+      # @return [Integer]
       def total_pages
         return 0 if total_entries.zero?
 
         (total_entries.to_f / per_page).ceil
       end
 
+      # The next page number, or +nil+ if on the last page.
+      # @return [Integer, nil]
       def next_page
         current_page >= total_pages ? nil : current_page + 1
       end
 
+      # The previous page number, or +nil+ if on the first page.
+      # @return [Integer, nil]
       def previous_page
         current_page <= 1 ? nil : current_page - 1
       end
+
+      # @!endgroup
 
       private
 

@@ -3,12 +3,31 @@
 require "set"
 
 module ManticoreRails
+  # ActiveRecord concern that adds ManticoreSearch indexing and search
+  # capabilities to a model. Include this module and call
+  # {ClassMethods#define_manticore_index} to configure the index.
+  #
+  # @example
+  #   class Article < ApplicationRecord
+  #     include ManticoreRails::Searchable
+  #
+  #     define_manticore_index do
+  #       indexes :title, :body
+  #       has :status, type: :integer
+  #     end
+  #   end
   module Searchable
     def self.included(base)
       base.extend ClassMethods
     end
 
+    # Class-level DSL methods mixed into the including model.
     module ClassMethods
+      # Defines the ManticoreSearch index for this model using a block DSL.
+      # Registers the index in the global {Registry} and sets up
+      # +after_commit+ callbacks for automatic indexing.
+      #
+      # @yield DSL block evaluated by {IndexBuilder}
       def define_manticore_index(&block)
         builder = IndexBuilder.new(&block)
         index = builder.build(self)
@@ -27,18 +46,31 @@ module ManticoreRails
         setup_manticore_reindex_callbacks(index)
       end
 
+      # Returns the {Index} definition for this model, walking STI ancestors
+      # if needed.
+      # @return [Index, nil]
       def manticore_index
         ManticoreRails.registry.find_by_class(self)
       end
 
+      # Returns a new {Indexer} for this model's index.
+      # @return [Indexer]
       def manticore_indexer
         Indexer.new(manticore_index)
       end
 
+      # Performs a full-text search returning hydrated ActiveRecord records.
+      # @param query [String] search query
+      # @param options [Hash] search options (+:with+, +:without+, +:order+, +:page+, +:per_page+)
+      # @return [Searcher::Result]
       def search(query, options = {})
         Searcher.search(manticore_index, query, options)
       end
 
+      # Performs a full-text search returning only record IDs.
+      # @param query [String] search query
+      # @param options [Hash] search options (same as {#search})
+      # @return [Searcher::Result]
       def search_for_ids(query, options = {})
         Searcher.search_for_ids(manticore_index, query, options)
       end
@@ -89,6 +121,9 @@ module ManticoreRails
         end
     end
 
+    # Indexes this record in ManticoreSearch. Called automatically via
+    # +after_commit+ on create/update. Respects circuit breaker and
+    # auto-indexing settings.
     def manticore_index_record
       return unless manticore_should_index?
 
@@ -103,6 +138,9 @@ module ManticoreRails
       )
     end
 
+    # Removes this record from ManticoreSearch. Called automatically via
+    # +after_commit+ on destroy. Respects circuit breaker and
+    # auto-indexing settings.
     def manticore_remove_record
       return unless manticore_should_index?
 

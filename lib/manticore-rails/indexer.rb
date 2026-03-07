@@ -1,13 +1,30 @@
 # frozen_string_literal: true
 
 module ManticoreRails
+  # Serializes ActiveRecord records and sends them to ManticoreSearch
+  # via the bulk NDJSON API. Handles field extraction, type coercion,
+  # association traversal, and batch operations.
+  #
+  # @example Index specific records
+  #   indexer = ManticoreRails::Indexer.new(Article.manticore_index)
+  #   indexer.index_records([1, 2, 3])
+  #
+  # @example Full reindex with progress
+  #   indexer.reindex_all { |count| puts "Indexed #{count} so far" }
   class Indexer
+    # @return [Index] the index definition this indexer operates on
     attr_reader :index
 
+    # @param index [Index]
     def initialize(index)
       @index = index
     end
 
+    # Serializes a single record into a ManticoreSearch document hash.
+    # Delegates to +record.manticore_serialize+ if defined, otherwise
+    # walks the index field/attribute definitions.
+    # @param record [ActiveRecord::Base]
+    # @return [Hash<String, Object>]
     def serialize(record)
       return record.manticore_serialize if record.respond_to?(:manticore_serialize)
 
@@ -24,6 +41,9 @@ module ManticoreRails
       doc.compact
     end
 
+    # Loads records by ID and sends them to ManticoreSearch via bulk replace.
+    # Reports missing records through the +on_error+ callback.
+    # @param ids [Array<Integer>] record IDs to index
     def index_records(ids)
       scope = index.model_class.where(id: ids)
       associations = index.referenced_associations
@@ -43,6 +63,8 @@ module ManticoreRails
       bulk_replace(docs)
     end
 
+    # Deletes records from ManticoreSearch by ID via bulk NDJSON.
+    # @param ids [Array<Integer>] record IDs to delete
     def delete_records(ids)
       return if ids.empty?
 
@@ -55,6 +77,11 @@ module ManticoreRails
       end
     end
 
+    # Reindexes all records in batches. Errors in individual batches are
+    # isolated and reported via +on_error+ without aborting the full reindex.
+    # @param scope [ActiveRecord::Relation, nil] optional scope to limit records
+    # @yield [Integer] called after each batch with the running total
+    # @return [Integer] total number of records indexed
     def reindex_all(scope: nil, &block)
       batch_size = ManticoreRails.configuration.batch_size
       source = scope || index.model_class
