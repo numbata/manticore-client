@@ -13,6 +13,8 @@ module ManticoreRails
         builder = IndexBuilder.new(&block)
         index = builder.build(self)
 
+        validate_manticore_associations(index) if respond_to?(:reflect_on_association)
+
         ManticoreRails.registry.register(self, index)
 
         # Set up after_commit callbacks if the model supports them
@@ -42,6 +44,16 @@ module ManticoreRails
       end
 
       private
+
+        def validate_manticore_associations(index)
+          (index.fields + index.attributes).select(&:association?).each do |field|
+            root = field.association_name
+            next if reflect_on_association(root)
+
+            warn "[ManticoreRails] WARNING: #{name} references unknown association '#{root}' " \
+                 "in field '#{field.column}'. Typo?"
+          end
+        end
 
         def setup_manticore_reindex_callbacks(index)
           return unless respond_to?(:reflect_on_association)
