@@ -70,11 +70,7 @@ module ManticoreRails
     def manticore_index_record
       return unless manticore_should_index?
 
-      config = ManticoreRails.configuration
-      if config.async_indexing && config.index_job_class
-        job_class = config.index_job_class.is_a?(String) ? config.index_job_class.constantize : config.index_job_class
-        job_class.perform_later(self.class.name, id)
-      else
+      manticore_perform_async_or_sync(:index) do
         self.class.manticore_indexer.index_records([id])
       end
     rescue StandardError => e
@@ -86,11 +82,25 @@ module ManticoreRails
     def manticore_remove_record
       return unless manticore_should_index?
 
-      self.class.manticore_indexer.delete_records([id])
+      manticore_perform_async_or_sync(:delete) do
+        self.class.manticore_indexer.delete_records([id])
+      end
     rescue StandardError => e
       ManticoreRails.configuration.on_error&.call(
         "Failed to remove #{self.class.name}##{id}", e
       )
+    end
+
+    private
+
+    def manticore_perform_async_or_sync(action)
+      config = ManticoreRails.configuration
+      if config.async_indexing && config.index_job_class
+        job_class = config.index_job_class.is_a?(String) ? config.index_job_class.constantize : config.index_job_class
+        job_class.perform_later(action.to_s, self.class.name, id)
+      else
+        yield
+      end
     end
 
     def manticore_should_index?

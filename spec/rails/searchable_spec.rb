@@ -98,13 +98,13 @@ RSpec.describe ManticoreRails::Searchable do
   describe "#manticore_should_index?" do
     it "returns true when auto_indexing is enabled and index exists" do
       instance = model_class.new
-      expect(instance.manticore_should_index?).to be(true)
+      expect(instance.send(:manticore_should_index?)).to be(true)
     end
 
     it "returns false when auto_indexing is disabled" do
       ManticoreRails.no_auto_indexing do
         instance = model_class.new
-        expect(instance.manticore_should_index?).to be(false)
+        expect(instance.send(:manticore_should_index?)).to be(false)
       end
     end
   end
@@ -119,6 +119,22 @@ RSpec.describe ManticoreRails::Searchable do
       instance.manticore_index_record
 
       expect(indexer).to have_received(:index_records).with([1])
+    end
+
+    it "enqueues async job with action when async_indexing is enabled" do
+      job_class = double("JobClass")
+      allow(job_class).to receive(:perform_later)
+
+      ManticoreRails.configuration.async_indexing = true
+      ManticoreRails.configuration.index_job_class = job_class
+
+      instance = model_class.new
+      instance.manticore_index_record
+
+      expect(job_class).to have_received(:perform_later).with("index", "TestModel", 1)
+    ensure
+      ManticoreRails.configuration.async_indexing = false
+      ManticoreRails.configuration.index_job_class = nil
     end
 
     it "does nothing when auto_indexing is off" do
@@ -145,6 +161,22 @@ RSpec.describe ManticoreRails::Searchable do
       instance.manticore_remove_record
 
       expect(indexer).to have_received(:delete_records).with([1])
+    end
+
+    it "enqueues async job with delete action when async_indexing is enabled" do
+      job_class = double("JobClass")
+      allow(job_class).to receive(:perform_later)
+
+      ManticoreRails.configuration.async_indexing = true
+      ManticoreRails.configuration.index_job_class = job_class
+
+      instance = model_class.new
+      instance.manticore_remove_record
+
+      expect(job_class).to have_received(:perform_later).with("delete", "TestModel", 1)
+    ensure
+      ManticoreRails.configuration.async_indexing = false
+      ManticoreRails.configuration.index_job_class = nil
     end
   end
 end
