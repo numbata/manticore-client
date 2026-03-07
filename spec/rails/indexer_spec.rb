@@ -41,6 +41,15 @@ RSpec.describe ManticoreRails::Indexer do
       expect(doc["beginning"]).to eq(time.to_i)
     end
 
+    it "coerces Date attributes to integers" do
+      date = Date.new(2024, 1, 15)
+      record = double("record", id: 1, name: "Test", description: "Desc",
+                                beginning: date, channel_id: 42)
+
+      doc = indexer.serialize(record)
+      expect(doc["beginning"]).to eq(date.to_time.to_i)
+    end
+
     it "coerces boolean true to 1 and false to 0" do
       index.add_attribute(:active, type: :boolean)
       record = double("record", id: 1, name: "Test", description: "Desc",

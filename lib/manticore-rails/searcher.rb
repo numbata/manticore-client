@@ -179,8 +179,8 @@ module ManticoreRails
 
         def coerce_filter_value(value)
           case value
-          when Time, DateTime
-            value.to_i
+          when Time, DateTime, Date
+            value.to_time.to_i
           else
             value
           end

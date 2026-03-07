@@ -108,8 +108,8 @@ module ManticoreRails
 
       def coerce_attribute(value, attr)
         case value
-        when Time, DateTime
-          value.to_i
+        when Time, DateTime, Date
+          value.to_time.to_i
         when TrueClass
           1
         when FalseClass
