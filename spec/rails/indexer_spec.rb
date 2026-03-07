@@ -68,6 +68,15 @@ RSpec.describe ManticoreRails::Indexer do
       expect(doc).not_to have_key("custom_field")
     end
 
+    it "skips SQL attributes (not stored in schema)" do
+      index.add_attribute("(SELECT COUNT(*) FROM tags)", as: :tag_count, type: :integer)
+      record = double("record", id: 1, name: "Test", description: "Desc",
+                                beginning: Time.now, channel_id: 1)
+
+      doc = indexer.serialize(record)
+      expect(doc).not_to have_key("tag_count")
+    end
+
     it "extracts association field values" do
       index.add_field("tags.name", as: :tags_name)
 
