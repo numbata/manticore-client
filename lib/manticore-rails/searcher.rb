@@ -102,7 +102,13 @@ module ManticoreRails
         def execute_search
           api = ManticoreClient::Client::SearchApi.new
           request = build_search_request
-          api.search(request)
+          if defined?(ActiveSupport::Notifications)
+            ActiveSupport::Notifications.instrument("search.manticore_rails", table: index.table_name) do
+              api.search(request)
+            end
+          else
+            api.search(request)
+          end
         end
 
         def build_search_request

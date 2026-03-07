@@ -40,7 +40,9 @@ module ManticoreRails
         { delete: { index: index.table_name, id: id } }.to_json
       end.join("\n")
 
-      check_bulk_response(index_api.bulk(ndjson))
+      instrument("delete.manticore_rails", table: index.table_name, count: ids.size) do
+        check_bulk_response(index_api.bulk(ndjson))
+      end
     end
 
     def reindex_all(scope: nil, &block)
@@ -134,7 +136,9 @@ module ManticoreRails
           { replace: { index: index.table_name, id: id, doc: rest } }.to_json
         end.join("\n")
 
-        check_bulk_response(index_api.bulk(ndjson))
+        instrument("bulk.manticore_rails", table: index.table_name, count: docs.size) do
+          check_bulk_response(index_api.bulk(ndjson))
+        end
       end
 
       def check_bulk_response(response)
@@ -145,6 +149,14 @@ module ManticoreRails
           message,
           StandardError.new(response.items.to_s)
         )
+      end
+
+      def instrument(name, payload = {}, &block)
+        if defined?(ActiveSupport::Notifications)
+          ActiveSupport::Notifications.instrument(name, payload, &block)
+        else
+          yield
+        end
       end
 
       def index_api
