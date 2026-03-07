@@ -1,4 +1,7 @@
-require "bundler/gem_tasks"
+require "bundler/gem_helper"
+
+Bundler::GemHelper.install_tasks(name: "manticore-client")
+Bundler::GemHelper.install_tasks(name: "manticore-rails")
 
 begin
   require "rspec/core/rake_task"
