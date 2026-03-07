@@ -53,6 +53,13 @@ RSpec.describe ManticoreRails::Schema do
       expect(sql).to include("enable_star = 'true'")
     end
 
+    it "escapes single quotes in property values" do
+      index.set_property(morphology: "lemmatize_en, lemmatize_de")
+      sql = described_class.create_table_sql(index)
+
+      expect(sql).to include("morphology = 'lemmatize_en, lemmatize_de'")
+    end
+
     it "rejects property keys with invalid characters" do
       index.set_property("bad'; DROP TABLE" => "evil")
       expect { described_class.create_table_sql(index) }.to raise_error(ArgumentError, /Invalid property name/)
@@ -93,6 +100,16 @@ RSpec.describe ManticoreRails::Schema do
         expect(body).to start_with("query=")
         expect(opts[:query_params]).to eq({ mode: "raw" })
       end
+    end
+  end
+
+  describe ".create_table with SQL error" do
+    it "raises when ManticoreSearch returns an error" do
+      utils_api = instance_double(ManticoreClient::Client::UtilsApi)
+      allow(ManticoreClient::Client::UtilsApi).to receive(:new).and_return(utils_api)
+      allow(utils_api).to receive(:sql).and_return([{ error: "table already exists", data: [] }])
+
+      expect { described_class.create_table(index) }.to raise_error(RuntimeError, /SQL failed/)
     end
   end
 
