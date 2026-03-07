@@ -332,23 +332,6 @@ RSpec.describe ManticoreRails::Attribute do
     end
   end
 
-  describe "#sortable?" do
-    it "returns true when sortable option is set" do
-      attr = described_class.new(:rating, type: :float, sortable: true)
-      expect(attr.sortable?).to be(true)
-    end
-
-    it "returns false when sortable option is not set" do
-      attr = described_class.new(:rating, type: :float)
-      expect(attr.sortable?).to be(false)
-    end
-
-    it "returns false when sortable is explicitly false" do
-      attr = described_class.new(:rating, type: :float, sortable: false)
-      expect(attr.sortable?).to be(false)
-    end
-  end
-
   describe "inherits Field behavior" do
     it "supports association columns" do
       attr = described_class.new("channel.id", type: :integer)

@@ -126,7 +126,6 @@ RSpec.describe ManticoreRails::IndexBuilder do
       beginning_attr = index.attributes.last
       expect(beginning_attr.name).to eq(:beginning)
       expect(beginning_attr.type).to eq(:datetime)
-      expect(beginning_attr.sortable?).to be(true)
     end
   end
 

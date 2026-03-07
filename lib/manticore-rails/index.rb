@@ -65,12 +65,14 @@ module ManticoreRails
     # Returns a flat array suitable for ActiveRecord's `includes`.
     # Simple associations return symbols, nested ones return hashes.
     def referenced_associations
-      paths = (fields + attributes)
-              .select(&:association?)
-              .map { |f| f.association_path[0...-1] }
-              .uniq
+      @referenced_associations ||= begin
+        paths = (fields + attributes)
+                .select(&:association?)
+                .map { |f| f.association_path[0...-1] }
+                .uniq
 
-      paths.map { |p| p.size == 1 ? p.first : nest_path(p) }
+        paths.map { |p| p.size == 1 ? p.first : nest_path(p) }
+      end
     end
 
     private
@@ -161,10 +163,6 @@ module ManticoreRails
 
     def manticore_type
       TYPE_MAP[type] || :string
-    end
-
-    def sortable?
-      !!options[:sortable]
     end
   end
 end
