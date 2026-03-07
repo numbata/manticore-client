@@ -180,8 +180,6 @@ module ManticoreRails
         case value
         when Time, DateTime
           value.to_i
-        when NilClass
-          0
         else
           value
         end
