@@ -14,6 +14,53 @@ AllCops:
 Naming/FileName:
   Exclude:
     - 'lib/manticore-client.rb'
+    - 'lib/manticore-rails.rb'
+
+Naming/AccessorMethodName:
+  Exclude:
+    - 'lib/manticore-rails/index.rb'
+    - 'lib/manticore-rails/index_builder.rb'
+
+Style/Documentation:
+  Exclude:
+    - 'lib/manticore-rails/**/*'
+    - 'lib/manticore-rails.rb'
+
+Metrics/AbcSize:
+  Exclude:
+    - 'lib/manticore-rails/**/*'
+
+Metrics/MethodLength:
+  Exclude:
+    - 'lib/manticore-rails/**/*'
+
+Metrics/CyclomaticComplexity:
+  Exclude:
+    - 'lib/manticore-rails/**/*'
+
+Metrics/PerceivedComplexity:
+  Exclude:
+    - 'lib/manticore-rails/**/*'
+
+Metrics/ClassLength:
+  Exclude:
+    - 'lib/manticore-rails/**/*'
+
+RSpec/VerifiedDoubles:
+  Exclude:
+    - 'spec/rails/**/*'
+
+RSpec/SpecFilePathFormat:
+  Exclude:
+    - 'spec/rails/**/*'
+
+RSpec/MultipleDescribes:
+  Exclude:
+    - 'spec/rails/**/*'
+
+RSpec/NoExpectationExample:
+  Exclude:
+    - 'spec/rails/**/*'
 
 # Prefer &&/|| over and/or.
 Style/AndOr:

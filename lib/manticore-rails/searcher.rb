@@ -42,7 +42,7 @@ module ManticoreRails
 
       def current_page
         page = options[:page].to_i
-        page < 1 ? 1 : page
+        [page, 1].max
       end
 
       def per_page
@@ -59,7 +59,7 @@ module ManticoreRails
       end
 
       def total_pages
-        return 0 if total_entries == 0
+        return 0 if total_entries.zero?
 
         (total_entries.to_f / per_page).ceil
       end

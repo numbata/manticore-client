@@ -147,8 +147,7 @@ RSpec.describe ManticoreRails::Searcher::Result do
     it "supports each" do
       stub_search(total: 2, hits: [{ id: 1 }, { id: 2 }])
       result = described_class.new(index, "test", ids_only: true)
-      collected = []
-      result.each { |item| collected << item }
+      collected = result.map { |item| item }
       expect(collected).to eq([1, 2])
     end
   end
@@ -181,7 +180,7 @@ RSpec.describe ManticoreRails::Searcher::Result do
       expect(search_api).to have_received(:search) do |request|
         bool = request.query.bool
         expect(bool).to be_a(ManticoreClient::Client::BoolFilter)
-        range_filter = bool.must.find { |f| f.range }
+        range_filter = bool.must.find(&:range)
         expect(range_filter.range).to eq({ beginning: { gte: 100, lte: 200 } })
       end
     end
@@ -192,7 +191,7 @@ RSpec.describe ManticoreRails::Searcher::Result do
 
       expect(search_api).to have_received(:search) do |request|
         bool = request.query.bool
-        in_filter = bool.must.find { |f| f._in }
+        in_filter = bool.must.find(&:_in)
         expect(in_filter._in).to eq({ channel_id: [1, 2, 3] })
       end
     end
@@ -203,7 +202,7 @@ RSpec.describe ManticoreRails::Searcher::Result do
 
       expect(search_api).to have_received(:search) do |request|
         bool = request.query.bool
-        eq_filter = bool.must.find { |f| f.equals }
+        eq_filter = bool.must.find(&:equals)
         expect(eq_filter.equals).to eq({ channel_id: 42 })
       end
     end
@@ -215,7 +214,7 @@ RSpec.describe ManticoreRails::Searcher::Result do
 
       expect(search_api).to have_received(:search) do |request|
         bool = request.query.bool
-        eq_filter = bool.must.find { |f| f.equals }
+        eq_filter = bool.must.find(&:equals)
         expect(eq_filter.equals).to eq({ beginning: time.to_i })
       end
     end

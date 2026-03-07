@@ -57,7 +57,7 @@ module ManticoreRails
             reflection.klass.class_eval do
               after_commit(on: %i[create update destroy]) do
                 parent = send(inverse_name)
-                parent.manticore_index_record if parent&.respond_to?(:manticore_index_record)
+                parent.manticore_index_record if parent.respond_to?(:manticore_index_record)
               end
             end
           rescue StandardError => e
