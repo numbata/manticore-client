@@ -167,7 +167,7 @@ RSpec.describe ManticoreRails::Indexer do
       record = double("record", id: 1, name: "Test", description: "Desc",
                                 beginning: Time.now, channel_id: 1)
 
-      scope = double("scope", includes: [record])
+      scope = [record]
       allow(index).to receive(:model_class).and_return(double("ar_class", table_name: "episodes", where: scope))
 
       index_api = instance_double(ManticoreClient::Client::IndexApi)

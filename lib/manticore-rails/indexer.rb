@@ -25,11 +25,11 @@ module ManticoreRails
     end
 
     def index_records(ids)
-      records = index.model_class
-                     .where(id: ids)
-                     .includes(*index.referenced_associations)
+      scope = index.model_class.where(id: ids)
+      associations = index.referenced_associations
+      scope = scope.includes(*associations) if associations.any?
 
-      docs = records.map { |r| serialize(r) }
+      docs = scope.map { |r| serialize(r) }
       bulk_replace(docs)
     end
 
@@ -49,7 +49,8 @@ module ManticoreRails
       associations = index.referenced_associations
 
       total = 0
-      source.includes(*associations).find_in_batches(batch_size: batch_size) do |batch|
+      source = source.includes(*associations) if associations.any?
+      source.find_in_batches(batch_size: batch_size) do |batch|
         docs = batch.map { |r| serialize(r) }
         bulk_replace(docs)
         total += docs.size
