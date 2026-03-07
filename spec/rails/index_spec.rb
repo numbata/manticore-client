@@ -3,9 +3,9 @@
 require_relative "spec_helper"
 
 RSpec.describe ManticoreRails::Index do
-  let(:model_class) { Struct.new(:table_name).new("articles") }
-
   subject(:index) { described_class.new(model_class) }
+
+  let(:model_class) { Struct.new(:table_name).new("articles") }
 
   describe "initialization" do
     it "stores the model_class" do
@@ -295,8 +295,18 @@ RSpec.describe ManticoreRails::Attribute do
       expect(attr.manticore_type).to eq(:string)
     end
 
-    it "defaults unknown type to string" do
+    it "maps json to json" do
       attr = described_class.new(:data, type: :json)
+      expect(attr.manticore_type).to eq(:json)
+    end
+
+    it "maps text to text" do
+      attr = described_class.new(:body, type: :text)
+      expect(attr.manticore_type).to eq(:text)
+    end
+
+    it "defaults unknown type to string" do
+      attr = described_class.new(:data, type: :unknown_type)
       expect(attr.manticore_type).to eq(:string)
     end
   end

@@ -71,6 +71,7 @@ module ManticoreRails
 
     def association_name
       return nil unless association?
+
       column_parts.first
     end
 
@@ -86,6 +87,7 @@ module ManticoreRails
 
     def association_path
       return [] unless association?
+
       column_parts
     end
 
@@ -95,9 +97,9 @@ module ManticoreRails
 
     private
 
-    def column_parts
-      @column_parts ||= column.to_s.split(".").map(&:to_sym)
-    end
+      def column_parts
+        @column_parts ||= column.to_s.split(".").map(&:to_sym)
+      end
   end
 
   class Attribute < Field
@@ -106,7 +108,9 @@ module ManticoreRails
       datetime: :timestamp,
       boolean: :bool,
       float: :float,
-      string: :string
+      string: :string,
+      text: :text,
+      json: :json
     }.freeze
 
     def type

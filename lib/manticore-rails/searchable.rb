@@ -41,30 +41,31 @@ module ManticoreRails
 
       private
 
-      def setup_manticore_reindex_callbacks(index)
-        return unless respond_to?(:reflect_on_association)
+        def setup_manticore_reindex_callbacks(index)
+          return unless respond_to?(:reflect_on_association)
 
-        index.reindex_associations.each do |assoc_name|
-          reflection = reflect_on_association(assoc_name.to_sym)
-          next unless reflection
+          index.reindex_associations.each do |assoc_name|
+            root_assoc = assoc_name.to_s.split(".").first
+            reflection = reflect_on_association(root_assoc.to_sym)
+            next unless reflection
 
-          inverse = reflection.inverse_of
-          next unless inverse
+            inverse = reflection.inverse_of
+            next unless inverse
 
-          inverse_name = inverse.name
+            inverse_name = inverse.name
 
-          reflection.klass.class_eval do
-            after_commit(on: %i[create update destroy]) do
-              parent = send(inverse_name)
-              parent.manticore_index_record if parent&.respond_to?(:manticore_index_record)
+            reflection.klass.class_eval do
+              after_commit(on: %i[create update destroy]) do
+                parent = send(inverse_name)
+                parent.manticore_index_record if parent&.respond_to?(:manticore_index_record)
+              end
             end
+          rescue StandardError => e
+            ManticoreRails.configuration.on_error&.call(
+              "Failed to setup reindex callback for #{assoc_name}", e
+            )
           end
-        rescue StandardError => e
-          ManticoreRails.configuration.on_error&.call(
-            "Failed to setup reindex callback for #{assoc_name}", e
-          )
         end
-      end
     end
 
     def manticore_index_record
@@ -93,18 +94,18 @@ module ManticoreRails
 
     private
 
-    def manticore_perform_async_or_sync(action)
-      config = ManticoreRails.configuration
-      if config.async_indexing && config.index_job_class
-        job_class = config.index_job_class.is_a?(String) ? config.index_job_class.constantize : config.index_job_class
-        job_class.perform_later(action.to_s, self.class.name, id)
-      else
-        yield
+      def manticore_perform_async_or_sync(action)
+        config = ManticoreRails.configuration
+        if config.async_indexing && config.index_job_class
+          job_class = config.index_job_class.is_a?(String) ? config.index_job_class.constantize : config.index_job_class
+          job_class.perform_later(action.to_s, self.class.name, id)
+        else
+          yield
+        end
       end
-    end
 
-    def manticore_should_index?
-      ManticoreRails.auto_indexing? && !self.class.manticore_index.nil?
-    end
+      def manticore_should_index?
+        ManticoreRails.auto_indexing? && !self.class.manticore_index.nil?
+      end
   end
 end

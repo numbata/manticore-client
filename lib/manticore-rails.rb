@@ -39,6 +39,9 @@ rails_loader = Zeitwerk::Loader.new
 rails_loader.tag = "manticore-rails"
 rails_loader.push_dir(File.expand_path("manticore-rails", __dir__), namespace: ManticoreRails)
 rails_loader.ignore(File.expand_path("manticore-rails/railtie.rb", __dir__))
+rails_loader.ignore(File.expand_path("manticore-rails/version.rb", __dir__))
 rails_loader.setup
 
-require_relative "manticore-rails/railtie" if defined?(::Rails::Railtie)
+require_relative "manticore-rails/version"
+
+require_relative "manticore-rails/railtie" if defined?(Rails::Railtie)
