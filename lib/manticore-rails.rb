@@ -5,6 +5,9 @@ require "singleton"
 require "manticore-client"
 
 module ManticoreRails
+  @circuit_mutex = Mutex.new
+  @failure_count = 0
+
   class << self
     def configuration
       @configuration ||= Configuration.new
@@ -33,15 +36,15 @@ module ManticoreRails
     end
 
     def circuit_open?
-      @failure_count.to_i >= configuration.circuit_breaker_threshold
+      @circuit_mutex.synchronize { @failure_count >= configuration.circuit_breaker_threshold }
     end
 
     def record_failure!
-      @failure_count = @failure_count.to_i + 1
+      @circuit_mutex.synchronize { @failure_count += 1 }
     end
 
     def record_success!
-      @failure_count = 0
+      @circuit_mutex.synchronize { @failure_count = 0 }
     end
 
     def healthy?
