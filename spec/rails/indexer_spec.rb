@@ -167,6 +167,32 @@ RSpec.describe ManticoreRails::Indexer do
     end
   end
 
+  describe "#index_records with missing records" do
+    it "reports missing record IDs via on_error" do
+      record = double("record", id: 1, name: "Test", description: "Desc",
+                                beginning: Time.now, channel_id: 1)
+      scope = [record]
+      allow(scope).to receive(:to_a).and_return(scope)
+      allow(index).to receive(:model_class).and_return(
+        double("ar_class", name: "Episode", table_name: "episodes", where: scope)
+      )
+
+      index_api = instance_double(ManticoreClient::Client::IndexApi)
+      allow(ManticoreClient::Client::IndexApi).to receive(:new).and_return(index_api)
+      allow(index_api).to receive(:bulk)
+
+      errors = []
+      ManticoreRails.configuration.on_error = ->(msg, err) { errors << [msg, err.message] }
+
+      indexer.index_records([1, 2, 3])
+
+      expect(errors.size).to eq(1)
+      expect(errors.first.first).to include("2, 3")
+    ensure
+      ManticoreRails.configuration.on_error = nil
+    end
+  end
+
   describe "#delete_records" do
     it "sends a single bulk NDJSON request" do
       index_api = instance_double(ManticoreClient::Client::IndexApi)

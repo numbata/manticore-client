@@ -29,7 +29,17 @@ module ManticoreRails
       associations = index.referenced_associations
       scope = scope.includes(*associations) if associations.any?
 
-      docs = scope.map { |r| serialize(r) }
+      records = scope.to_a
+      if records.size < ids.size
+        found_ids = records.map(&:id)
+        missing = ids - found_ids
+        ManticoreRails.configuration.on_error&.call(
+          "#{index.model_class.name} records not found for indexing: #{missing.join(', ')}",
+          StandardError.new("Missing records: #{missing.join(', ')}")
+        )
+      end
+
+      docs = records.map { |r| serialize(r) }
       bulk_replace(docs)
     end
 
