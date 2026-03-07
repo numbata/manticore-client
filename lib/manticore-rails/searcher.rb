@@ -46,7 +46,7 @@ module ManticoreRails
       end
 
       def per_page
-        (options[:per_page] || options[:limit] || 20).to_i
+        [(options[:per_page] || options[:limit] || 20).to_i, 1].max
       end
 
       def offset

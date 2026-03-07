@@ -60,6 +60,11 @@ RSpec.describe ManticoreRails::Searcher::Result do
       expect(result.per_page).to eq(20)
     end
 
+    it "clamps per_page to minimum 1" do
+      result = described_class.new(index, "test", per_page: 0)
+      expect(result.per_page).to eq(1)
+    end
+
     it "calculates offset from page" do
       result = described_class.new(index, "test", page: 3, per_page: 10)
       expect(result.offset).to eq(20)
