@@ -22,7 +22,9 @@ module ManticoreRails
     end
 
     def find_by_class(klass)
-      @mutex.synchronize { @indexes[klass] }
+      @mutex.synchronize do
+        @indexes[klass] || klass.ancestors.drop(1).lazy.filter_map { |a| @indexes[a] }.first
+      end
     end
 
     def find_by_table(table_name)

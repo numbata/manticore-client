@@ -40,6 +40,13 @@ RSpec.describe ManticoreRails::Registry do
     it "returns nil for unregistered class" do
       expect(registry.find_by_class(klass)).to be_nil
     end
+
+    it "finds index via ancestor (STI support)" do
+      parent = Class.new
+      child = Class.new(parent)
+      registry.register(parent, fake_index)
+      expect(registry.find_by_class(child)).to eq(fake_index)
+    end
   end
 
   describe "#find_by_table" do
