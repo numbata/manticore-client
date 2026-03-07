@@ -23,24 +23,14 @@ module ManticoreRails
       end
 
       def create_table_sql(index)
-        columns = []
-
-        index.fields.each do |field|
-          next if field.sql?
-
-          columns << "#{field.name} #{MANTICORE_TYPE_MAP[field.manticore_type] || "text"}"
-        end
-
-        index.attributes.each do |attr|
-          next if attr.sql?
-
-          columns << "#{attr.name} #{MANTICORE_TYPE_MAP[attr.manticore_type] || "string"}"
+        columns = (index.fields + index.attributes).reject(&:sql?).map do |col|
+          "#{col.name} #{MANTICORE_TYPE_MAP[col.manticore_type] || "string"}"
         end
 
         sql = "CREATE TABLE IF NOT EXISTS #{index.table_name} (#{columns.join(", ")})"
 
         if index.properties.any?
-          options = index.properties.map { |k, v| "#{k} = '#{v}'" }.join(" ")
+          options = index.properties.map { |k, v| "#{k} = '#{v.to_s.gsub("'", "''")}'" }.join(" ")
           sql += " #{options}"
         end
 
