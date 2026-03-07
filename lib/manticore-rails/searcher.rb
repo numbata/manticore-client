@@ -88,7 +88,12 @@ module ManticoreRails
           @items = @matches.map { |h| h._id.to_i }
         else
           ids = @matches.map { |h| h._id.to_i }
-          @items = ids.empty? ? [] : index.model_class.where(id: ids).to_a
+          @items = if ids.empty?
+            []
+          else
+            records_by_id = index.model_class.where(id: ids).index_by(&:id)
+            ids.filter_map { |id| records_by_id[id] }
+          end
         end
 
         @populated = true

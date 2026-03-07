@@ -108,6 +108,41 @@ RSpec.describe ManticoreRails::Searcher::Result do
     end
   end
 
+  describe "result ordering" do
+    let(:ar_class) { double("ar_class", table_name: "episodes") }
+
+    before do
+      allow(index).to receive(:model_class).and_return(ar_class)
+    end
+
+    it "preserves search ranking order from ManticoreSearch" do
+      stub_search(total: 3, hits: [{ id: 5 }, { id: 3 }, { id: 1 }])
+
+      record1 = double("record1", id: 1)
+      record3 = double("record3", id: 3)
+      record5 = double("record5", id: 5)
+      ar_relation = double("relation")
+      allow(ar_relation).to receive(:index_by).and_return({ 1 => record1, 3 => record3, 5 => record5 })
+      allow(ar_class).to receive(:where).and_return(ar_relation)
+
+      result = described_class.new(index, "test")
+      expect(result.to_a).to eq([record5, record3, record1])
+    end
+
+    it "skips records missing from the database" do
+      stub_search(total: 3, hits: [{ id: 5 }, { id: 3 }, { id: 1 }])
+
+      record1 = double("record1", id: 1)
+      record5 = double("record5", id: 5)
+      ar_relation = double("relation")
+      allow(ar_relation).to receive(:index_by).and_return({ 1 => record1, 5 => record5 })
+      allow(ar_class).to receive(:where).and_return(ar_relation)
+
+      result = described_class.new(index, "test")
+      expect(result.to_a).to eq([record5, record1])
+    end
+  end
+
   describe "Enumerable" do
     it "supports each" do
       stub_search(total: 2, hits: [{ id: 1 }, { id: 2 }])
