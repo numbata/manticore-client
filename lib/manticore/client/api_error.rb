@@ -27,9 +27,9 @@ module ManticoreClient::Client
           super arg
         end
 
-        arg.each do |k, v|
-          instance_variable_set "@#{k}", v
-        end
+        @code = arg[:code] || arg['code']
+        @response_headers = arg[:response_headers] || arg['response_headers']
+        @response_body = arg[:response_body] || arg['response_body']
       else
         super arg
         @message = arg
