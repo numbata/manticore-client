@@ -40,8 +40,7 @@ module ManticoreRails
         { delete: { index: index.table_name, id: id } }.to_json
       end.join("\n")
 
-      api = ManticoreClient::Client::IndexApi.new
-      api.bulk(ndjson)
+      index_api.bulk(ndjson)
     end
 
     def reindex_all(scope: nil, &block)
@@ -124,8 +123,11 @@ module ManticoreRails
         body.to_json
       end.join("\n")
 
-      api = ManticoreClient::Client::IndexApi.new
-      api.bulk(ndjson)
+      index_api.bulk(ndjson)
+    end
+
+    def index_api
+      @index_api ||= ManticoreClient::Client::IndexApi.new
     end
   end
 end
