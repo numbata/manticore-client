@@ -335,6 +335,7 @@ RSpec.describe ManticoreRails do
         def self.reflect_on_association(_name) = nil
 
         include ManticoreRails::Searchable
+
         define_manticore_index do
           indexes :title
           has :id, type: :integer

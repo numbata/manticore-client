@@ -17,8 +17,7 @@ RSpec.describe "UtilsApi" do
 
     sql = "DROP TABLE #{table_name}"
     api_instance.sql("query=#{URI.encode_www_form_component(sql)}", query_params: { mode: "raw" })
-  rescue StandardError => e
-    puts "Warning: Could not drop table #{table_name}: #{e.message}"
+  rescue StandardError # rubocop:disable Lint/SuppressedException
   end
 
   describe "#sql" do
