@@ -60,8 +60,9 @@ module ManticoreRails
             end
           end
         rescue => e
-          # Log but don't fail if callback setup doesn't work
-          warn "[ManticoreRails] Failed to setup reindex callback for #{assoc_name}: #{e.message}"
+          ManticoreRails.configuration.on_error&.call(
+            "Failed to setup reindex callback for #{assoc_name}", e
+          )
         end
       end
     end
@@ -77,7 +78,9 @@ module ManticoreRails
         self.class.manticore_indexer.index_records([id])
       end
     rescue => e
-      warn "[ManticoreRails] Failed to index #{self.class.name}##{id}: #{e.message}"
+      ManticoreRails.configuration.on_error&.call(
+        "Failed to index #{self.class.name}##{id}", e
+      )
     end
 
     def manticore_remove_record
@@ -85,7 +88,9 @@ module ManticoreRails
 
       self.class.manticore_indexer.delete_records([id])
     rescue => e
-      warn "[ManticoreRails] Failed to remove #{self.class.name}##{id}: #{e.message}"
+      ManticoreRails.configuration.on_error&.call(
+        "Failed to remove #{self.class.name}##{id}", e
+      )
     end
 
     def manticore_should_index?

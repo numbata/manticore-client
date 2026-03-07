@@ -2,7 +2,7 @@
 
 module ManticoreRails
   class Configuration
-    attr_accessor :auto_indexing, :async_indexing, :index_job_class
+    attr_accessor :auto_indexing, :async_indexing, :index_job_class, :on_error
     attr_reader :index_prefix, :batch_size
 
     def initialize
@@ -11,6 +11,7 @@ module ManticoreRails
       @auto_indexing = true
       @async_indexing = false
       @index_job_class = nil
+      @on_error = ->(message, error) { warn "[ManticoreRails] #{message}: #{error.message}" }
     end
 
     def batch_size=(value)
