@@ -26,6 +26,7 @@ Style/Documentation:
     - 'lib/manticore-rails/**/*'
     - 'lib/manticore-rails.rb'
     - 'lib/manticore/client.rb'
+    - 'lib/generators/**/*'
     - 'spec/support/**/*'
 
 Metrics/AbcSize:

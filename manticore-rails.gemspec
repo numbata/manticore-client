@@ -28,6 +28,7 @@ Gem::Specification.new do |spec|
 
   spec.files = %w[LICENSE.txt README-rails.md] + Dir.glob("lib/manticore-rails.rb") +
                Dir.glob("lib/manticore-rails/**/*.rb") +
+               Dir.glob("lib/generators/**/*") +
                Dir.glob("lib/tasks/**/*.rake")
 
   spec.executables = []
