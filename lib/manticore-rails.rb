@@ -21,10 +21,11 @@ module ManticoreRails
     end
 
     def no_auto_indexing
+      was = Thread.current[:manticore_no_auto_indexing]
       Thread.current[:manticore_no_auto_indexing] = true
       yield
     ensure
-      Thread.current[:manticore_no_auto_indexing] = false
+      Thread.current[:manticore_no_auto_indexing] = was
     end
 
     def registry

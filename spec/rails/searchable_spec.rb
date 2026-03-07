@@ -107,6 +107,21 @@ RSpec.describe ManticoreRails::Searchable do
         expect(instance.send(:manticore_should_index?)).to be(false)
       end
     end
+
+    it "restores previous state when no_auto_indexing is nested" do
+      ManticoreRails.no_auto_indexing do
+        ManticoreRails.no_auto_indexing do
+          instance = model_class.new
+          expect(instance.send(:manticore_should_index?)).to be(false)
+        end
+        # After inner block, outer block should still suppress indexing
+        instance = model_class.new
+        expect(instance.send(:manticore_should_index?)).to be(false)
+      end
+      # After outer block, indexing should be re-enabled
+      instance = model_class.new
+      expect(instance.send(:manticore_should_index?)).to be(true)
+    end
   end
 
   describe "#manticore_index_record" do
