@@ -175,6 +175,45 @@ rake manticore:index:rebuild             # reindex all tables
 rake manticore:index:rebuild[articles]   # reindex specific table
 ```
 
+## Table properties
+
+Use `set_property` to pass ManticoreSearch table options:
+
+```ruby
+define_manticore_index do
+  indexes :title
+  indexes :body
+
+  set_property min_infix_len: 3
+  set_property morphology: "stem_en"
+end
+```
+
+Properties are appended to the `CREATE TABLE` statement as `key = 'value'` pairs.
+
+## Error handling
+
+By default, indexing errors are reported via `warn`. Configure a custom handler for production:
+
+```ruby
+ManticoreRails.configure do |config|
+  config.on_error = ->(message, error) {
+    Rails.logger.error("[ManticoreRails] #{message}: #{error.message}")
+    Sentry.capture_exception(error) if defined?(Sentry)
+  }
+end
+```
+
+The callback receives `(message, error)` and is invoked for indexing failures, bulk operation errors, and callback setup issues.
+
+## Health check
+
+```ruby
+ManticoreRails.healthy?  # => true / false
+```
+
+Returns `true` if ManticoreSearch is reachable, `false` on any connection error.
+
 ## Configuration reference
 
 ```ruby
@@ -184,6 +223,7 @@ ManticoreRails.configure do |config|
   config.auto_indexing   = true          # after_commit index/remove callbacks
   config.async_indexing  = false         # delegate indexing to a background job
   config.index_job_class = nil           # job class name (string) for async mode
+  config.on_error        = ->(msg, err) { warn "[ManticoreRails] #{msg}: #{err.message}" }
 end
 ```
 
