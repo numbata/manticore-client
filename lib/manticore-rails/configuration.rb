@@ -2,7 +2,8 @@
 
 module ManticoreRails
   class Configuration
-    attr_accessor :index_prefix, :batch_size, :auto_indexing, :async_indexing, :index_job_class
+    attr_accessor :auto_indexing, :async_indexing, :index_job_class
+    attr_reader :index_prefix, :batch_size
 
     def initialize
       @index_prefix = nil
@@ -10,6 +11,21 @@ module ManticoreRails
       @auto_indexing = true
       @async_indexing = false
       @index_job_class = nil
+    end
+
+    def batch_size=(value)
+      value = value.to_i
+      raise ArgumentError, "batch_size must be positive" unless value.positive?
+
+      @batch_size = value
+    end
+
+    def index_prefix=(value)
+      if value && !value.to_s.match?(/\A[a-z0-9_]*\z/i)
+        raise ArgumentError, "index_prefix must only contain alphanumeric characters and underscores"
+      end
+
+      @index_prefix = value&.to_s
     end
 
     def table_name_for(name)

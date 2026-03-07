@@ -54,6 +54,26 @@ RSpec.describe ManticoreRails::Configuration do
     end
   end
 
+  describe "validation" do
+    it "rejects batch_size of 0" do
+      expect { config.batch_size = 0 }.to raise_error(ArgumentError, /batch_size must be positive/)
+    end
+
+    it "rejects negative batch_size" do
+      expect { config.batch_size = -1 }.to raise_error(ArgumentError, /batch_size must be positive/)
+    end
+
+    it "rejects index_prefix with special characters" do
+      expect { config.index_prefix = "bad prefix!" }.to raise_error(ArgumentError, /alphanumeric/)
+    end
+
+    it "accepts nil index_prefix" do
+      config.index_prefix = "test_"
+      config.index_prefix = nil
+      expect(config.index_prefix).to be_nil
+    end
+  end
+
   describe "#table_name_for" do
     context "without prefix" do
       it "returns the name as-is" do
