@@ -175,6 +175,8 @@ rake manticore:index:rebuild             # reindex all tables
 rake manticore:index:rebuild[articles]   # reindex specific table
 ```
 
+**Note:** `manticore:setup` and `manticore:schema:rebuild` drop and recreate tables, causing brief downtime for search queries. For zero-downtime schema changes, create a new table with a versioned name, populate it, then swap via application config. This is not yet automated.
+
 ## Table properties
 
 Use `set_property` to pass ManticoreSearch table options:

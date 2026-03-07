@@ -2,8 +2,8 @@
 
 module ManticoreRails
   class Configuration
-    attr_accessor :auto_indexing, :async_indexing, :index_job_class, :on_error
-    attr_reader :index_prefix, :batch_size
+    attr_accessor :auto_indexing, :async_indexing, :on_error
+    attr_reader :index_job_class, :index_prefix, :batch_size
 
     def initialize
       @index_prefix = nil
@@ -27,6 +27,18 @@ module ManticoreRails
       end
 
       @index_prefix = value&.to_s
+    end
+
+    def index_job_class=(value)
+      @index_job_class = value
+      @resolved_job_class = nil
+    end
+
+    def resolved_job_class
+      @resolved_job_class ||= case @index_job_class
+                              when String then @index_job_class.constantize
+                              else @index_job_class
+      end
     end
 
     def table_name_for(name)

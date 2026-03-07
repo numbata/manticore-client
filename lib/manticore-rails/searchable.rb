@@ -118,8 +118,7 @@ module ManticoreRails
       def manticore_perform_async_or_sync(action)
         config = ManticoreRails.configuration
         if config.async_indexing && config.index_job_class
-          job_class = config.index_job_class.is_a?(String) ? config.index_job_class.constantize : config.index_job_class
-          job_class.perform_later(action.to_s, self.class.name, id)
+          config.resolved_job_class.perform_later(action.to_s, self.class.name, id)
         else
           yield
         end
