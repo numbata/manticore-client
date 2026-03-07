@@ -9,8 +9,7 @@ module ManticoreRails
       timestamp: "timestamp",
       bool: "bool",
       float: "float",
-      json: "json",
-      mva: "multi"
+      json: "json"
     }.freeze
 
     class << self
