@@ -21,6 +21,9 @@ Naming/AccessorMethodName:
     - 'lib/manticore-rails/index.rb'
     - 'lib/manticore-rails/index_builder.rb'
 
+Style/OneClassPerFile:
+  Enabled: false
+
 Style/Documentation:
   Exclude:
     - 'lib/manticore-rails/**/*'
