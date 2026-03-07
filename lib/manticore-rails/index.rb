@@ -63,11 +63,14 @@ module ManticoreRails
       (options[:as] || column_name).to_sym
     end
 
+    SQL_KEYWORDS = /\b(?:SELECT|CAST|IF|CONVERT|GROUP_CONCAT|CONCAT|LOWER|UPPER|UNIX_TIMESTAMP)\b/i.freeze
+    SQL_FUNCTION = /\A\w+\(.*\)\z/.freeze
+
     def sql?
       column.is_a?(String) && (
         column.strip.start_with?("(") ||
-        column.match?(/\b(?:SELECT|CAST|IF|CONVERT|GROUP_CONCAT|CONCAT|LOWER|UPPER|UNIX_TIMESTAMP)\b/i) ||
-        column.match?(/\A\w+\(.*\)\z/)
+        column.match?(SQL_KEYWORDS) ||
+        column.match?(SQL_FUNCTION)
       )
     end
 

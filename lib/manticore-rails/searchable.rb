@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "set"
+
 module ManticoreRails
   module Searchable
     def self.included(base)
@@ -44,8 +46,11 @@ module ManticoreRails
         def setup_manticore_reindex_callbacks(index)
           return unless respond_to?(:reflect_on_association)
 
+          seen = Set.new
           index.reindex_associations.each do |assoc_name|
             root_assoc = assoc_name.to_s.split(".").first
+            next unless seen.add?(root_assoc)
+
             reflection = reflect_on_association(root_assoc.to_sym)
             next unless reflection
 
