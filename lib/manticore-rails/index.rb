@@ -32,13 +32,23 @@ module ManticoreRails
       ManticoreRails.configuration.table_name_for(model_class.table_name)
     end
 
-    # All unique association names from fields and attributes
+    # All unique association includes from fields and attributes.
+    # Returns a flat array suitable for ActiveRecord's `includes`.
+    # Simple associations return symbols, nested ones return hashes.
     def referenced_associations
-      (fields + attributes)
-        .select(&:association?)
-        .map(&:association_name)
-        .uniq
+      paths = (fields + attributes)
+              .select(&:association?)
+              .map { |f| f.association_path[0...-1] }
+              .uniq
+
+      paths.map { |p| p.size == 1 ? p.first : nest_path(p) }
     end
+
+    private
+
+      def nest_path(parts)
+        parts.reverse.inject { |inner, outer| { outer => inner } }
+      end
   end
 
   class Field

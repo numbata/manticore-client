@@ -103,6 +103,15 @@ RSpec.describe ManticoreRails::Index do
       index.add_field("(SELECT COUNT(*) FROM comments)", as: :comments_count)
       expect(index.referenced_associations).to eq([])
     end
+
+    it "returns nested hashes for multi-level association paths" do
+      index.add_field("anchors.dvags.name")
+      index.add_field("tags.name")
+      expect(index.referenced_associations).to contain_exactly(
+        { anchors: :dvags },
+        :tags
+      )
+    end
   end
 end
 
