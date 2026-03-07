@@ -30,18 +30,18 @@ RSpec.describe ManticoreRails::Schema do
       expect(sql).to include("channel_id bigint")
     end
 
-    it "excludes SQL fields from DDL" do
+    it "includes aliased SQL fields in DDL" do
       index.add_field("(SELECT GROUP_CONCAT(...) FROM ...)", as: :anchors_title)
       sql = described_class.create_table_sql(index)
 
-      expect(sql).not_to include("anchors_title")
+      expect(sql).to include("anchors_title text")
     end
 
-    it "excludes SQL attributes from DDL" do
+    it "includes aliased SQL attributes in DDL" do
       index.add_attribute("CAST(substring_index(ancestry, '/', 1) AS unsigned)", as: :root_id, type: :integer)
       sql = described_class.create_table_sql(index)
 
-      expect(sql).not_to include("root_id")
+      expect(sql).to include("root_id bigint")
     end
 
     it "includes properties as table options" do

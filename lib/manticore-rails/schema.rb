@@ -23,9 +23,11 @@ module ManticoreRails
       end
 
       def create_table_sql(index)
-        columns = (index.fields + index.attributes).reject(&:sql?).map do |col|
+        columns = (index.fields + index.attributes).map do |col|
+          next if col.sql? && !col.options[:as]
+
           "#{col.name} #{MANTICORE_TYPE_MAP[col.manticore_type] || 'string'}"
-        end
+        end.compact
 
         sql = "CREATE TABLE IF NOT EXISTS #{index.table_name} (#{columns.join(', ')})"
 
