@@ -237,6 +237,60 @@ RSpec.describe ManticoreRails::Searchable do
 end
 
 RSpec.describe ManticoreRails do
+  describe "circuit breaker" do
+    before { described_class.record_success! }
+
+    it "is closed by default" do
+      expect(described_class.circuit_open?).to be(false)
+    end
+
+    it "opens after reaching threshold failures" do
+      described_class.configuration.circuit_breaker_threshold.times do
+        described_class.record_failure!
+      end
+      expect(described_class.circuit_open?).to be(true)
+    end
+
+    it "resets on success" do
+      5.times { described_class.record_failure! }
+      described_class.record_success!
+      expect(described_class.circuit_open?).to be(false)
+    end
+
+    it "prevents indexing when circuit is open" do
+      described_class.configuration.circuit_breaker_threshold.times do
+        described_class.record_failure!
+      end
+
+      model_class = Class.new do
+        def self.table_name = "cb_test"
+        def self.name = "CbTest"
+        def self.after_commit(*, **); end
+        def self.reflect_on_association(_name) = nil
+
+        include ManticoreRails::Searchable
+        define_manticore_index do
+          indexes :title
+          has :id, type: :integer
+        end
+
+        def id = 1
+      end
+
+      indexer = instance_double(ManticoreRails::Indexer)
+      allow(ManticoreRails::Indexer).to receive(:new).and_return(indexer)
+      allow(indexer).to receive(:index_records)
+
+      instance = model_class.new
+      instance.manticore_index_record
+
+      expect(indexer).not_to have_received(:index_records)
+    ensure
+      described_class.record_success!
+      described_class.registry.reset!
+    end
+  end
+
   describe ".healthy?" do
     it "returns true when ManticoreSearch responds" do
       utils_api = instance_double(ManticoreClient::Client::UtilsApi)

@@ -32,6 +32,18 @@ module ManticoreRails
       Registry.instance
     end
 
+    def circuit_open?
+      @failure_count.to_i >= configuration.circuit_breaker_threshold
+    end
+
+    def record_failure!
+      @failure_count = @failure_count.to_i + 1
+    end
+
+    def record_success!
+      @failure_count = 0
+    end
+
     def healthy?
       client = ManticoreClient::Client::UtilsApi.new
       response = client.sql("query=SHOW+STATUS", query_params: { mode: "raw" })

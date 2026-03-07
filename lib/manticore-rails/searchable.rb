@@ -95,7 +95,9 @@ module ManticoreRails
       manticore_perform_async_or_sync(:index) do
         self.class.manticore_indexer.index_records([id])
       end
+      ManticoreRails.record_success!
     rescue StandardError => e
+      ManticoreRails.record_failure!
       ManticoreRails.configuration.on_error&.call(
         "Failed to index #{self.class.name}##{id}", e
       )
@@ -107,7 +109,9 @@ module ManticoreRails
       manticore_perform_async_or_sync(:delete) do
         self.class.manticore_indexer.delete_records([id])
       end
+      ManticoreRails.record_success!
     rescue StandardError => e
+      ManticoreRails.record_failure!
       ManticoreRails.configuration.on_error&.call(
         "Failed to remove #{self.class.name}##{id}", e
       )
@@ -125,7 +129,7 @@ module ManticoreRails
       end
 
       def manticore_should_index?
-        ManticoreRails.auto_indexing? && !self.class.manticore_index.nil?
+        ManticoreRails.auto_indexing? && !ManticoreRails.circuit_open? && !self.class.manticore_index.nil?
       end
   end
 end
