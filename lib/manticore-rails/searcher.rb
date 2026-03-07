@@ -134,18 +134,21 @@ module ManticoreRails
             ManticoreClient::Client::SearchQuery.new(match_all: {})
           end
 
-          # Add filters from :with option
-          if options[:with].is_a?(Hash) && !options[:with].empty?
-            filter_queries = options[:with].map { |attr, value| build_filter(attr, value) }
+          must_filters = build_filters_from(options[:with])
+          must_not_filters = build_filters_from(options[:without])
+
+          if must_filters.any? || must_not_filters.any?
             base_filter = if base.query_string
               ManticoreClient::Client::QueryFilter.new(query_string: base.query_string)
             else
               ManticoreClient::Client::QueryFilter.new(match_all: base.match_all)
             end
+
+            bool_params = { must: [base_filter, *must_filters] }
+            bool_params[:must_not] = must_not_filters if must_not_filters.any?
+
             ManticoreClient::Client::SearchQuery.new(
-              bool: ManticoreClient::Client::BoolFilter.new(
-                must: [base_filter, *filter_queries]
-              )
+              bool: ManticoreClient::Client::BoolFilter.new(**bool_params)
             )
           else
             base
@@ -181,6 +184,12 @@ module ManticoreRails
           else
             []
           end
+        end
+
+        def build_filters_from(hash)
+          return [] unless hash.is_a?(Hash) && !hash.empty?
+
+          hash.map { |attr, value| build_filter(attr, value) }
         end
 
         def coerce_filter_value(value)

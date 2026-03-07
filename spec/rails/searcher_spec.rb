@@ -252,4 +252,33 @@ RSpec.describe ManticoreRails::Searcher::Result do
       end
     end
   end
+
+  describe "without: exclusion filters" do
+    before do
+      index.add_attribute(:channel_id, type: :integer)
+      index.add_attribute(:beginning, type: :datetime)
+    end
+
+    it "adds must_not filters for without: option" do
+      stub_search(total: 0)
+      described_class.new(index, "test", without: { channel_id: 42 }).to_a
+
+      expect(search_api).to have_received(:search) do |request|
+        bool = request.query.bool
+        expect(bool.must_not).to be_an(Array)
+        expect(bool.must_not.first.equals).to eq({ channel_id: 42 })
+      end
+    end
+
+    it "combines with: and without: filters" do
+      stub_search(total: 0)
+      described_class.new(index, "test", with: { beginning: 100..200 }, without: { channel_id: [1, 2] }).to_a
+
+      expect(search_api).to have_received(:search) do |request|
+        bool = request.query.bool
+        expect(bool.must.size).to eq(2) # base query + with filter
+        expect(bool.must_not.size).to eq(1) # without filter
+      end
+    end
+  end
 end
