@@ -30,7 +30,10 @@ namespace :manticore do
     task :rebuild, [:table] => :environment do |_t, args|
       load_all_indexed_models
       indexes = if args[:table]
-        [ManticoreRails::Registry.instance.find_by_table(args[:table])].compact
+        registry = ManticoreRails::Registry.instance
+        prefixed = ManticoreRails.configuration.table_name_for(args[:table])
+        found = registry.find_by_table(args[:table]) || registry.find_by_table(prefixed)
+        [found].compact
       else
         ManticoreRails::Registry.instance.all
       end

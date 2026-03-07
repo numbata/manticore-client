@@ -120,8 +120,9 @@ module ManticoreRails
         return if docs.empty?
 
         ndjson = docs.map do |doc|
-          body = { replace: { index: index.table_name, id: doc["id"], doc: doc.except("id") } }
-          body.to_json
+          id = doc["id"] || doc[:id]
+          rest = doc.reject { |k, _| k.to_s == "id" }
+          { replace: { index: index.table_name, id: id, doc: rest } }.to_json
         end.join("\n")
 
         index_api.bulk(ndjson)

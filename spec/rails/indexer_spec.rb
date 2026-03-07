@@ -119,6 +119,21 @@ RSpec.describe ManticoreRails::Indexer do
       doc = indexer.serialize(record)
       expect(doc).to eq(custom_doc)
     end
+
+    it "handles symbol-keyed docs from custom serializers in bulk_replace" do
+      index_api = instance_double(ManticoreClient::Client::IndexApi)
+      allow(ManticoreClient::Client::IndexApi).to receive(:new).and_return(index_api)
+      allow(index_api).to receive(:bulk)
+
+      docs = [{ id: 5, title: "Test" }]
+      indexer.send(:bulk_replace, docs)
+
+      expect(index_api).to have_received(:bulk).once do |ndjson|
+        parsed = JSON.parse(ndjson)
+        expect(parsed["replace"]["id"]).to eq(5)
+        expect(parsed["replace"]["doc"]).to eq({ "title" => "Test" })
+      end
+    end
   end
 
   describe "#delete_records" do
