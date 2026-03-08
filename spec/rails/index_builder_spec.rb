@@ -159,6 +159,25 @@ RSpec.describe ManticoreRails::IndexBuilder do
     end
   end
 
+  describe "includes" do
+    subject(:builder) do
+      described_class.new do
+        indexes :name
+        includes :transcripts, anchors: :dvags
+      end
+    end
+
+    it "stores extra includes" do
+      index = builder.build(model_class)
+      expect(index.extra_includes).to eq([:transcripts, { anchors: :dvags }])
+    end
+
+    it "merges extra includes into referenced_associations" do
+      index = builder.build(model_class)
+      expect(index.referenced_associations).to include(:transcripts, { anchors: :dvags })
+    end
+  end
+
   describe "set_property" do
     subject(:builder) do
       described_class.new do

@@ -19,6 +19,7 @@ module ManticoreRails
       @field_definitions = []
       @attribute_definitions = []
       @reindex_association_list = []
+      @extra_includes = []
       @property_hash = {}
       instance_eval(&block) if block
     end
@@ -50,6 +51,16 @@ module ManticoreRails
       end
     end
 
+    # Declares extra associations to eager-load during batch indexing.
+    # Use this when +manticore_serialize+ accesses associations that aren't
+    # declared as index fields (e.g. associations used only in custom serialization).
+    # @param associations [Array<Symbol, Hash>] association names suitable for ActiveRecord's +includes+
+    # @example
+    #   includes :transcripts, anchors: :dvags
+    def includes(*associations)
+      @extra_includes.concat(associations)
+    end
+
     # Sets ManticoreSearch table properties (e.g. +min_infix_len+, +morphology+).
     # @param hash [Hash] property key-value pairs
     def set_property(hash)
@@ -65,6 +76,7 @@ module ManticoreRails
       @field_definitions.each { |col, opts| index.add_field(col, opts) }
       @attribute_definitions.each { |col, opts| index.add_attribute(col, opts) }
       @reindex_association_list.each { |assoc| index.add_reindex_association(assoc) }
+      @extra_includes.each { |assoc| index.add_extra_include(assoc) }
       index.set_property(@property_hash) unless @property_hash.empty?
 
       index

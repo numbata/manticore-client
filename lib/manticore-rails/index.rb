@@ -9,7 +9,7 @@ module ManticoreRails
     # @return [Array<Attribute>] filterable/sortable attributes
     # @return [Hash] ManticoreSearch table properties (e.g. morphology)
     # @return [Array<String>] association names that trigger reindexing
-    attr_reader :model_class, :fields, :attributes, :properties, :reindex_associations
+    attr_reader :model_class, :fields, :attributes, :properties, :reindex_associations, :extra_includes
 
     # @param model_class [Class] ActiveRecord model class
     def initialize(model_class)
@@ -18,6 +18,7 @@ module ManticoreRails
       @attributes = []
       @properties = {}
       @reindex_associations = []
+      @extra_includes = []
     end
 
     # @param column [Symbol, String] column name or dot-notation association path
@@ -46,6 +47,14 @@ module ManticoreRails
       @reindex_associations << association
     end
 
+    # @param association [Symbol, Hash] association to eager-load during indexing
+    # @raise [FrozenError] if the index has been frozen
+    def add_extra_include(association)
+      raise FrozenError, "can't modify frozen #{self.class}" if @frozen
+
+      @extra_includes << association
+    end
+
     # Merges ManticoreSearch table properties (e.g. +min_infix_len+, +morphology+).
     # @param hash [Hash] property key-value pairs
     # @raise [FrozenError] if the index has been frozen
@@ -64,6 +73,7 @@ module ManticoreRails
       @attributes.freeze
       @properties.freeze
       @reindex_associations.freeze
+      @extra_includes.freeze
       self
     end
 
@@ -90,7 +100,7 @@ module ManticoreRails
       ManticoreRails.configuration.table_name_for(model_class.table_name)
     end
 
-    # Unique association includes from fields and attributes.
+    # Unique association includes from fields, attributes, and extra includes.
     # @return [Array<Symbol, Hash>] suitable for ActiveRecord's +includes+
     def referenced_associations
       @referenced_associations ||= begin
@@ -99,7 +109,8 @@ module ManticoreRails
                 .map { |f| f.association_path[0...-1] }
                 .uniq
 
-        paths.map { |p| p.size == 1 ? p.first : nest_path(p) }
+        from_fields = paths.map { |p| p.size == 1 ? p.first : nest_path(p) }
+        (from_fields + extra_includes).uniq
       end
     end
 
