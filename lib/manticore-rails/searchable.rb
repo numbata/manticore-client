@@ -130,7 +130,7 @@ module ManticoreRails
       end
 
       def manticore_should_index?
-        ManticoreRails.auto_indexing? && !ManticoreRails.circuit_open? && !self.class.manticore_index.nil?
+        ManticoreRails.auto_indexing? && !ManticoreRails.circuit_open? && self.class.manticore_index
       end
   end
 end

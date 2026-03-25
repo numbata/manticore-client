@@ -152,11 +152,10 @@ module ManticoreRails
       end
 
       def check_bulk_response(response)
-        return unless response.respond_to?(:errors) && response.errors
+        return unless response.errors
 
-        message = response.respond_to?(:error) && response.error ? response.error : "Bulk operation had errors"
         ManticoreRails.configuration.on_error&.call(
-          message,
+          response.error || "Bulk operation had errors",
           StandardError.new(response.items.to_s)
         )
       end
