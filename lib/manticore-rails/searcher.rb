@@ -123,12 +123,48 @@ module ManticoreRails
 
       # @!endgroup
 
+      # Returns term counts grouped by the requested attribute(s).
+      #
+      # Issues a dedicated search request with limit: 0 (no hits fetched).
+      # Shares the same query and filters as the parent Result.
+      #
+      # @param fields [Array<Symbol, String>] indexed attribute names to bucket by
+      # @param size [Integer] max buckets per field (default: 1000)
+      # @return [Hash<Symbol, Hash>] { field => { value => count } }
+      #
+      # @example Count endless episodes per channel
+      #   Episode.search("", with: { ending: 0 }).facets(:channel_id)
+      #   #=> { channel_id: { 42 => 5, 99 => 3 } }
+      #
+      # @example Multiple fields in one request
+      #   result.facets(:channel_id, :status)
+      #   #=> { channel_id: { 42 => 5 }, status: { 1 => 8, 2 => 3 } }
+      def facets(*fields, size: 1000)
+        return {} if fields.empty?
+
+        aggs = fields.to_h do |field|
+          [field.to_s, ManticoreClient::Client::Aggregation.new(
+            terms: ManticoreClient::Client::AggTerms.new(field: field.to_s, size: size)
+          )]
+        end
+
+        response = execute_request(build_search_request(aggs: aggs, limit: 0))
+        raw = response.aggregations || {}
+
+        fields.each_with_object({}) do |field, result|
+          buckets = raw.dig(field.to_sym, :buckets) || raw.dig(field.to_s, "buckets") || []
+          result[field.to_sym] = buckets.to_h do |bucket|
+            [bucket[:key] || bucket["key"], bucket[:doc_count] || bucket["doc_count"]]
+          end
+        end
+      end
+
       private
 
         def populate
           return if @populated
 
-          response = execute_search
+          response = execute_request(build_search_request)
 
           hits = response.hits
 
@@ -150,9 +186,8 @@ module ManticoreRails
           @populated = true
         end
 
-        def execute_search
+        def execute_request(request)
           api = ManticoreClient::Client::SearchApi.new
-          request = build_search_request
           if defined?(ActiveSupport::Notifications)
             ActiveSupport::Notifications.instrument("search.manticore_rails", table: index.table_name) do
               api.search(request)
@@ -162,17 +197,18 @@ module ManticoreRails
           end
         end
 
-        def build_search_request
+        def build_search_request(aggs: nil, limit: nil)
           query_params = build_query
           sort_params = options[:order] ? build_sort(options[:order]) : nil
 
           attrs = {
             table: index.table_name,
             query: query_params,
-            limit: per_page,
+            limit: limit || per_page,
             offset: offset
           }
           attrs[:sort] = sort_params if sort_params
+          attrs[:aggs] = aggs if aggs
 
           ManticoreClient::Client::SearchRequest.new(**attrs)
         end

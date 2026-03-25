@@ -37,16 +37,17 @@ RSpec.describe ManticoreRails::Searcher::Result do
     allow(ManticoreClient::Client::SearchApi).to receive(:new).and_return(search_api)
   end
 
-  def mock_search_response(total:, hits: [])
+  def mock_search_response(total:, hits: [], aggregations: nil)
     hit_objects = hits.map do |h|
       instance_double(ManticoreClient::Client::HitsHits, _id: h[:id].to_s, _score: 1, _source: h[:source] || {})
     end
     hits_obj = instance_double(ManticoreClient::Client::SearchResponseHits, total: total, hits: hit_objects)
-    instance_double(ManticoreClient::Client::SearchResponse, hits: hits_obj)
+    instance_double(ManticoreClient::Client::SearchResponse, hits: hits_obj, aggregations: aggregations)
   end
 
-  def stub_search(total:, hits: [])
-    allow(search_api).to receive(:search).and_return(mock_search_response(total: total, hits: hits))
+  def stub_search(total:, hits: [], aggregations: nil)
+    allow(search_api).to receive(:search).and_return(mock_search_response(total: total, hits: hits, 
+                                                                          aggregations: aggregations))
   end
 
   describe "pagination" do
@@ -269,6 +270,99 @@ RSpec.describe ManticoreRails::Searcher::Result do
 
       expect(search_api).to have_received(:search) do |request|
         expect(request.sort).to eq([{ "beginning" => "desc" }])
+      end
+    end
+  end
+
+  describe "#facets" do
+    it "returns empty hash when no fields given" do
+      result = described_class.new(index, "test")
+      expect(result.facets).to eq({})
+    end
+
+    it "returns bucket counts keyed by field symbol (symbol keys — real client format)" do
+      stub_search(total: 0, aggregations: {
+                    channel_id: { buckets: [{ key: 42, doc_count: 5 }, { key: 99, doc_count: 3 }] }
+                  })
+
+      result = described_class.new(index, "test")
+      expect(result.facets(:channel_id)).to eq(channel_id: { 42 => 5, 99 => 3 })
+    end
+
+    it "returns bucket counts keyed by field symbol (string keys — legacy/mock format)" do
+      stub_search(total: 0, aggregations: {
+                    "channel_id" => {
+                      "buckets" => [{ "key" => 42, "doc_count" => 5 }, { "key" => 99, "doc_count" => 3 }]
+                    }
+                  })
+
+      result = described_class.new(index, "test")
+      expect(result.facets(:channel_id)).to eq(channel_id: { 42 => 5, 99 => 3 })
+    end
+
+    it "returns multiple fields in one request" do
+      stub_search(total: 0, aggregations: {
+                    channel_id: { buckets: [{ key: 42, doc_count: 5 }] },
+                    status: { buckets: [{ key: 1, doc_count: 8 }, { key: 2, doc_count: 3 }] }
+                  })
+
+      result = described_class.new(index, "test")
+      expect(result.facets(:channel_id, :status)).to eq(
+        channel_id: { 42 => 5 },
+        status: { 1 => 8, 2 => 3 }
+      )
+    end
+
+    it "returns empty bucket hash when field absent from aggregations" do
+      stub_search(total: 0, aggregations: {})
+
+      result = described_class.new(index, "test")
+      expect(result.facets(:channel_id)).to eq(channel_id: {})
+    end
+
+    it "sends limit: 0 so no hits are fetched" do
+      stub_search(total: 0, aggregations: { channel_id: { buckets: [] } })
+
+      described_class.new(index, "test").facets(:channel_id)
+
+      expect(search_api).to have_received(:search) do |request|
+        expect(request.limit).to eq(0)
+      end
+    end
+
+    it "includes AggTerms for each requested field" do
+      stub_search(total: 0, aggregations: {
+                    channel_id: { buckets: [] },
+                    status: { buckets: [] }
+                  })
+
+      described_class.new(index, "test").facets(:channel_id, :status)
+
+      expect(search_api).to have_received(:search) do |request|
+        expect(request.aggs.keys).to contain_exactly("channel_id", "status")
+        expect(request.aggs["channel_id"].terms.field).to eq("channel_id")
+        expect(request.aggs["status"].terms.field).to eq("status")
+      end
+    end
+
+    it "respects custom size option" do
+      stub_search(total: 0, aggregations: { channel_id: { buckets: [] } })
+
+      described_class.new(index, "test").facets(:channel_id, size: 50)
+
+      expect(search_api).to have_received(:search) do |request|
+        expect(request.aggs["channel_id"].terms.size).to eq(50)
+      end
+    end
+
+    it "preserves the same query filters as the parent result" do
+      stub_search(total: 0, aggregations: { channel_id: { buckets: [] } })
+
+      described_class.new(index, "test query", with: { status: 1 }).facets(:channel_id)
+
+      expect(search_api).to have_received(:search) do |request|
+        eq_filter = request.query.bool.must.find(&:equals)
+        expect(eq_filter.equals).to eq({ status: 1 })
       end
     end
   end

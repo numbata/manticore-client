@@ -24,7 +24,7 @@ RSpec.describe "SearchApi" do
     ManticoreSqlHelper.drop_table(table_name)
   end
 
-  describe "#autocomplete" do
+  describe "#autocomplete", :dev_only do
     it "returns suggestions for prefix" do
       request = ManticoreClient::Client::AutocompleteRequest.new(table: table_name, query: "Hel")
       result = api_instance.autocomplete(request)

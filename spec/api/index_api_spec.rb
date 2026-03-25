@@ -114,7 +114,7 @@ RSpec.describe "IndexApi" do
   end
 
   # Partially replaces a document in a table.
-  describe "#partial_replace" do
+  describe "#partial_replace", :dev_only do
     it "partially updates a document" do
       request = ManticoreClient::Client::ReplaceDocumentRequest.new(
         doc: { rating: 8.8 }

@@ -33,6 +33,18 @@ rescue StandardError => e
         "Is it running? (#{e.class}: #{e.message})\n"
 end
 
+# Detect whether the server supports dev-only endpoints (e.g. /autocomplete, /_update/:id).
+# Stable Manticore builds return 501 for these; the :dev_only tag skips them automatically.
+MANTICORE_DEV_ENDPOINTS = begin
+  req = Net::HTTP::Post.new("/autocomplete")
+  req["Content-Type"] = "application/json"
+  req.body = "{}"
+  res = Net::HTTP.start(parsed.host, parsed.port, read_timeout: 2) { |http| http.request(req) }
+  res.code.to_i != 501
+rescue StandardError
+  false
+end
+
 RSpec.configure do |config|
   config.before(:suite) do
     ManticoreSqlHelper.tables(prefix: TABLE_PREFIX).each do |table|
@@ -52,6 +64,14 @@ RSpec.configure do |config|
 
   config.mock_with :rspec do |mocks|
     mocks.verify_partial_doubles = true
+  end
+
+  config.around(:example, :dev_only) do |example|
+    if MANTICORE_DEV_ENDPOINTS
+      example.run
+    else
+      skip "requires Manticore dev server (endpoint returned 501 on this build)"
+    end
   end
 
   config.filter_run :focus
