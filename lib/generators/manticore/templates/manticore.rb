@@ -5,7 +5,7 @@ ManticoreClient::Client.configure do |config|
 end
 
 ManticoreRails.configure do |config|
-  config.index_prefix    = Rails.env.test? ? "test_" : nil
+  config.index_prefix    = Rails.env.test? ? "test" : nil
   config.batch_size      = 1000
   config.auto_indexing   = true
   config.async_indexing  = false

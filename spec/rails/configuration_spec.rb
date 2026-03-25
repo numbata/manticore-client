@@ -30,7 +30,7 @@ RSpec.describe ManticoreRails::Configuration do
   describe "custom values" do
     it "allows setting index_prefix" do
       config.index_prefix = "prod_"
-      expect(config.index_prefix).to eq("prod_")
+      expect(config.index_prefix).to eq("prod")
     end
 
     it "allows setting batch_size" do
@@ -125,9 +125,17 @@ RSpec.describe ManticoreRails::Configuration do
     end
 
     context "with prefix" do
+      before { config.index_prefix = "prod" }
+
+      it "prepends the prefix to the name with underscore separator" do
+        expect(config.table_name_for("articles")).to eq("prod_articles")
+      end
+    end
+
+    context "with prefix containing trailing underscore" do
       before { config.index_prefix = "prod_" }
 
-      it "prepends the prefix to the name" do
+      it "strips the trailing underscore and still produces a single separator" do
         expect(config.table_name_for("articles")).to eq("prod_articles")
       end
     end

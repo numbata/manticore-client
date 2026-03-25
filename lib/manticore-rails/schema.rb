@@ -1,11 +1,6 @@
 # frozen_string_literal: true
 
 module ManticoreRails
-  # Generates and executes DDL statements (CREATE TABLE / DROP TABLE)
-  # against ManticoreSearch via the SQL API.
-  #
-  # @example Create a table for an index
-  #   ManticoreRails::Schema.create_table(Article.manticore_index)
   class Schema
     # Maps internal column types to ManticoreSearch DDL type names.
     MANTICORE_TYPE_MAP = {
@@ -19,32 +14,28 @@ module ManticoreRails
     }.freeze
 
     class << self
-      # Creates the ManticoreSearch table for the given index.
-      # @param index [Index] the index whose table to create
-      # @return [Array] the raw response data from ManticoreSearch
       def create_table(index)
         execute(create_table_sql(index))
       end
 
-      # Drops the ManticoreSearch table for the given index.
-      # @param index [Index] the index whose table to drop
-      # @return [Array] the raw response data from ManticoreSearch
       def drop_table(index)
         execute(drop_table_sql(index))
       end
 
-      # Generates a +CREATE TABLE IF NOT EXISTS+ SQL statement.
-      # @param index [Index] the index definition
-      # @return [String] the DDL statement
-      # @raise [ArgumentError] if a property name contains invalid characters
       def create_table_sql(index)
+        table = index.table_name
+        raise ArgumentError, "Invalid table name: #{table}" unless table.match?(/\A[a-z_]\w*\z/i)
+
         columns = (index.fields + index.attributes).map do |col|
           next if col.sql? && !col.options[:as]
 
-          "#{col.name} #{MANTICORE_TYPE_MAP[col.manticore_type] || 'string'}"
+          col_name = col.name.to_s
+          raise ArgumentError, "Invalid column name: #{col_name}" unless col_name.match?(/\A[a-z_]\w*\z/i)
+
+          "#{col_name} #{MANTICORE_TYPE_MAP[col.manticore_type] || 'string'}"
         end.compact
 
-        sql = "CREATE TABLE IF NOT EXISTS #{index.table_name} (#{columns.join(', ')})"
+        sql = "CREATE TABLE IF NOT EXISTS #{table} (#{columns.join(', ')})"
 
         if index.properties.any?
           options = index.properties.map do |k, v|
@@ -59,11 +50,11 @@ module ManticoreRails
         sql
       end
 
-      # Generates a +DROP TABLE IF EXISTS+ SQL statement.
-      # @param index [Index] the index definition
-      # @return [String] the DDL statement
       def drop_table_sql(index)
-        "DROP TABLE IF EXISTS #{index.table_name}"
+        table = index.table_name
+        raise ArgumentError, "Invalid table name: #{table}" unless table.match?(/\A[a-z_]\w*\z/i)
+
+        "DROP TABLE IF EXISTS #{table}"
       end
 
       private
