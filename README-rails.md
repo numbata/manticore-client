@@ -25,7 +25,7 @@ rails g manticore:install
 # config/initializers/manticore.rb
 
 ManticoreClient::Client.configure do |config|
-  config.host = ENV.fetch("MANTICORESEARCH_URL", "http://127.0.0.1:9308")
+  config.host = ENV.fetch("MANTICORESEARCH_URI", "http://127.0.0.1:9308")
 end
 
 ManticoreRails.configure do |config|
@@ -284,7 +284,7 @@ end
 ManticoreRails.healthy?  # => false
 ```
 
-Ensure ManticoreSearch is running and `MANTICORESEARCH_URL` points to the correct host.
+Ensure ManticoreSearch is running and `MANTICORESEARCH_URI` points to the correct host.
 
 **Table doesn't exist after adding fields**
 

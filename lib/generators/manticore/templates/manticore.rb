@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 ManticoreClient::Client.configure do |config|
-  config.host = ENV.fetch("MANTICORESEARCH_URL", "http://127.0.0.1:9308")
+  config.host = ENV.fetch("MANTICORESEARCH_URI", "http://127.0.0.1:9308")
 end
 
 ManticoreRails.configure do |config|
