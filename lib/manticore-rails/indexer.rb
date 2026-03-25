@@ -152,7 +152,7 @@ module ManticoreRails
       end
 
       def check_bulk_response(response)
-        return unless response.errors
+        return unless response&.errors
 
         ManticoreRails.configuration.on_error&.call(
           response.error || "Bulk operation had errors",
