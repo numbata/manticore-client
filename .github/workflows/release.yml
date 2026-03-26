@@ -1,17 +1,20 @@
-name: Release Gem
+name: Release
 
 on:
-  push:
-    tags:
-      - 'v*'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry run — skip tagging, publishing, and GitHub releases"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  models: read
 
 jobs:
-  build:
-    name: Build + Publish
+  release:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
 
     services:
       manticoresearch:
@@ -20,46 +23,190 @@ jobs:
           - 9308:9308
 
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Set up Ruby
-      uses: ruby/setup-ruby@v1
-      with:
-        ruby-version: '3.4'
-        bundler-cache: true
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.4"
+          bundler-cache: true
 
-    - name: Install dependencies
-      run: bundle install
+      - name: Install dependencies
+        run: bundle install
 
-    - name: Run tests
-      run: bundle exec rspec
-      env:
-        MANTICORESEARCH_URI: http://localhost:9308
+      - name: Run tests
+        run: bundle exec rspec
+        env:
+          MANTICORESEARCH_URI: http://localhost:9308
 
-    - name: Build gem
-      run: bundle exec rake build
+      - name: Read versions
+        id: versions
+        run: |
+          CLIENT=$(ruby -r ./lib/manticore/client/version \
+            -e 'puts ManticoreClient::Client::VERSION')
+          RAILS=$(ruby -r ./lib/manticore-rails/version \
+            -e 'puts ManticoreRails::VERSION')
+          echo "client=$CLIENT"               >> "$GITHUB_OUTPUT"
+          echo "rails=$RAILS"                 >> "$GITHUB_OUTPUT"
+          echo "client_tag=manticore-client-v$CLIENT" >> "$GITHUB_OUTPUT"
+          echo "rails_tag=manticore-rails-v$RAILS"    >> "$GITHUB_OUTPUT"
 
-    - name: Publish to GPR
-      run: |
-        mkdir -p $HOME/.gem
-        touch $HOME/.gem/credentials
-        chmod 0600 $HOME/.gem/credentials
-        printf -- "---\n:github: ${GEM_HOST_API_KEY}\n" > $HOME/.gem/credentials
-        for gem in pkg/*.gem; do
-          gem push --KEY github --host https://rubygems.pkg.github.com/${OWNER} "$gem"
-        done
-      env:
-        GEM_HOST_API_KEY: "Bearer ${{secrets.GITHUB_TOKEN}}"
-        OWNER: ${{ github.repository_owner }}
+      - name: Check tags do not already exist
+        run: |
+          for tag in \
+            "${{ steps.versions.outputs.client_tag }}" \
+            "${{ steps.versions.outputs.rails_tag }}"; do
+            if git rev-parse "$tag" >/dev/null 2>&1; then
+              echo "::error::Tag $tag already exists — bump the version before releasing."
+              exit 1
+            fi
+          done
 
-    - name: Publish to RubyGems
-      run: |
-        mkdir -p $HOME/.gem
-        touch $HOME/.gem/credentials
-        chmod 0600 $HOME/.gem/credentials
-        printf -- "---\n:rubygems_api_key: ${GEM_HOST_API_KEY}\n" > $HOME/.gem/credentials
-        for gem in pkg/*.gem; do
-          gem push "$gem"
-        done
-      env:
-        GEM_HOST_API_KEY: ${{secrets.RUBYGEMS_API_KEY}}
+      - name: Collect commits since last release
+        id: commits
+        run: |
+          LAST=$(git tag --list 'manticore-client-v*' \
+            --sort=-version:refname | head -1)
+          if [ -n "$LAST" ]; then
+            git log "${LAST}..HEAD" --oneline --no-merges > /tmp/commits.txt
+          else
+            git log --oneline --no-merges | head -60 > /tmp/commits.txt
+          fi
+          echo "last_tag=${LAST}" >> "$GITHUB_OUTPUT"
+          echo "--- commits ---"
+          cat /tmp/commits.txt
+
+      - name: Generate release notes via GitHub Models
+        run: |
+          CLIENT_VER="${{ steps.versions.outputs.client }}"
+          RAILS_VER="${{ steps.versions.outputs.rails }}"
+          COMMITS=$(cat /tmp/commits.txt)
+
+          PAYLOAD=$(jq -n \
+            --arg commits "$COMMITS" \
+            --arg cv "$CLIENT_VER" \
+            --arg rv "$RAILS_VER" \
+            '{
+              model: "gpt-4o-mini",
+              messages: [{
+                role: "system",
+                content: "You write release notes for open-source Ruby gems. Be concise, user-focused, and practical. Use GitHub Markdown."
+              }, {
+                role: "user",
+                content: (
+                  "Write release notes for manticore-client v" + $cv +
+                  " and manticore-rails v" + $rv +
+                  " (Ruby gems for ManticoreSearch — an open-source full-text search engine).\n\n" +
+                  "Commits since last release:\n" + $commits + "\n\n" +
+                  "Format:\n" +
+                  "- Group into: ## Breaking Changes, ## New Features, ## Bug Fixes, ## Other (skip empty groups)\n" +
+                  "- Each item: one line, lead with the user-facing impact\n" +
+                  "- Do not mention commit hashes or PR numbers\n" +
+                  "- No intro sentence, start directly with the first group header"
+                )
+              }],
+              max_tokens: 900
+            }')
+
+          RESPONSE=$(curl -sf \
+            -H "Authorization: Bearer ${{ github.token }}" \
+            -H "Content-Type: application/json" \
+            -d "$PAYLOAD" \
+            "https://models.inference.ai.azure.com/chat/completions")
+
+          echo "$RESPONSE" | jq -r '.choices[0].message.content' > /tmp/release_notes.txt
+          echo "--- generated notes ---"
+          cat /tmp/release_notes.txt
+
+      - name: Prepend entry to CHANGELOG.md
+        run: |
+          DATE=$(date +%Y-%m-%d)
+          VER="${{ steps.versions.outputs.client }}"
+          NOTES=$(cat /tmp/release_notes.txt)
+
+          # Build the new section
+          {
+            echo "## [${VER}] - ${DATE}"
+            echo ""
+            echo "$NOTES"
+            echo ""
+          } > /tmp/new_section.txt
+
+          if [ -f CHANGELOG.md ]; then
+            # Insert after the first line (title) if it starts with "# "
+            if head -1 CHANGELOG.md | grep -q '^# '; then
+              head -1 CHANGELOG.md > /tmp/new_changelog.txt
+              echo "" >> /tmp/new_changelog.txt
+              cat /tmp/new_section.txt >> /tmp/new_changelog.txt
+              tail -n +2 CHANGELOG.md >> /tmp/new_changelog.txt
+            else
+              cat /tmp/new_section.txt CHANGELOG.md > /tmp/new_changelog.txt
+            fi
+            mv /tmp/new_changelog.txt CHANGELOG.md
+          else
+            { echo "# Changelog"; echo ""; cat /tmp/new_section.txt; } > CHANGELOG.md
+          fi
+
+      - name: Commit CHANGELOG, tag, and push
+        if: ${{ !inputs.dry_run }}
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add CHANGELOG.md
+          git diff --cached --quiet || git commit \
+            -m "Release manticore-client v${{ steps.versions.outputs.client }} and manticore-rails v${{ steps.versions.outputs.rails }}"
+          git tag "${{ steps.versions.outputs.client_tag }}"
+          git tag "${{ steps.versions.outputs.rails_tag }}"
+          git push origin HEAD:main --tags
+
+      - name: Build gems
+        run: bundle exec rake build
+
+      - name: Publish to RubyGems
+        if: ${{ !inputs.dry_run }}
+        run: |
+          mkdir -p "$HOME/.gem"
+          chmod 0700 "$HOME/.gem"
+          printf -- "---\n:rubygems_api_key: %s\n" "$RUBYGEMS_API_KEY" \
+            > "$HOME/.gem/credentials"
+          chmod 0600 "$HOME/.gem/credentials"
+          gem push "pkg/manticore-client-${{ steps.versions.outputs.client }}.gem"
+          gem push "pkg/manticore-rails-${{ steps.versions.outputs.rails }}.gem"
+        env:
+          RUBYGEMS_API_KEY: ${{ secrets.RUBYGEMS_API_KEY }}
+
+      - name: Publish to GitHub Packages
+        if: ${{ !inputs.dry_run }}
+        run: |
+          mkdir -p "$HOME/.gem"
+          chmod 0700 "$HOME/.gem"
+          printf -- "---\n:github: Bearer %s\n" "$GITHUB_TOKEN" \
+            > "$HOME/.gem/credentials"
+          chmod 0600 "$HOME/.gem/credentials"
+          HOST="https://rubygems.pkg.github.com/${{ github.repository_owner }}"
+          gem push --KEY github --host "$HOST" \
+            "pkg/manticore-client-${{ steps.versions.outputs.client }}.gem"
+          gem push --KEY github --host "$HOST" \
+            "pkg/manticore-rails-${{ steps.versions.outputs.rails }}.gem"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create GitHub releases
+        if: ${{ !inputs.dry_run }}
+        run: |
+          NOTES=$(cat /tmp/release_notes.txt)
+
+          gh release create "${{ steps.versions.outputs.client_tag }}" \
+            --title "manticore-client v${{ steps.versions.outputs.client }}" \
+            --notes "$NOTES" \
+            "pkg/manticore-client-${{ steps.versions.outputs.client }}.gem"
+
+          gh release create "${{ steps.versions.outputs.rails_tag }}" \
+            --title "manticore-rails v${{ steps.versions.outputs.rails }}" \
+            --notes "$NOTES" \
+            "pkg/manticore-rails-${{ steps.versions.outputs.rails }}.gem"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
