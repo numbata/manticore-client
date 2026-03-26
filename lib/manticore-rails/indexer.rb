@@ -115,7 +115,7 @@ module ManticoreRails
         result = target.public_send(current_assoc)
         return nil if result.nil?
 
-        if result.respond_to?(:flat_map)
+        if result.is_a?(Enumerable) && !result.is_a?(Hash)
           result.flat_map { |item| collect_values(item, remaining, col, depth + 1) || [] }
         else
           collect_values(result, remaining, col, depth + 1)
