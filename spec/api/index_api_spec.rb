@@ -3,7 +3,7 @@
 require "spec_helper"
 
 RSpec.describe "IndexApi" do
-  subject(:index_api) { Manticore::Client::IndexApi.new }
+  subject(:index_api) { ManticoreClient::Client::IndexApi.new }
 
   let(:table_name) { "#{TABLE_PREFIX}movies" }
 
@@ -49,14 +49,14 @@ RSpec.describe "IndexApi" do
   # Delete one or several documents.
   describe "#delete" do
     it "removes one doc from table" do
-      request = Manticore::Client::DeleteDocumentRequest.new(
+      request = ManticoreClient::Client::DeleteDocumentRequest.new(
         table: table_name,
         id: 2
       )
 
       result = index_api.delete(request)
 
-      expect(result).to be_a(Manticore::Client::DeleteResponse)
+      expect(result).to be_a(ManticoreClient::Client::DeleteResponse)
       expect(result).to have_attributes(
         table: table_name,
         result: "deleted"
@@ -70,14 +70,14 @@ RSpec.describe "IndexApi" do
     end
 
     it "removes several docs from table" do
-      request = Manticore::Client::DeleteDocumentRequest.new(
+      request = ManticoreClient::Client::DeleteDocumentRequest.new(
         table: table_name,
         id: [1, 2]
       )
 
       result = index_api.delete(request)
 
-      expect(result).to be_a(Manticore::Client::DeleteResponse)
+      expect(result).to be_a(ManticoreClient::Client::DeleteResponse)
       expect(result).to have_attributes(
         table: table_name,
         result: "deleted"
@@ -92,7 +92,7 @@ RSpec.describe "IndexApi" do
   # Insert a new document in a table.
   describe "#insert" do
     it "inserts a new document" do
-      request = Manticore::Client::InsertDocumentRequest.new(
+      request = ManticoreClient::Client::InsertDocumentRequest.new(
         table: table_name,
         id: 3,
         doc: { title: "Brand new movie", rating: 7.7 }
@@ -100,7 +100,7 @@ RSpec.describe "IndexApi" do
 
       result = index_api.insert(request)
 
-      expect(result).to be_a(Manticore::Client::SuccessResponse)
+      expect(result).to be_a(ManticoreClient::Client::SuccessResponse)
       expect(result).to have_attributes(
         table: table_name,
         id: 3,
@@ -114,16 +114,16 @@ RSpec.describe "IndexApi" do
   end
 
   # Partially replaces a document in a table.
-  describe "#partial_replace" do
+  describe "#partial_replace", :dev_only do
     it "partially updates a document" do
-      request = Manticore::Client::ReplaceDocumentRequest.new(
+      request = ManticoreClient::Client::ReplaceDocumentRequest.new(
         doc: { rating: 8.8 }
       )
       id = 1
 
       result = index_api.partial_replace(table_name, id, request)
 
-      expect(result).to be_a(Manticore::Client::UpdateResponse)
+      expect(result).to be_a(ManticoreClient::Client::UpdateResponse)
       expect(result).to have_attributes(updated: 1)
       expect(table_name).to have_docs(
         { id: 1, title: "Scary movie", rating: 8.8 }
@@ -134,7 +134,7 @@ RSpec.describe "IndexApi" do
   # Replace a document in a table (full replace)
   describe "#replace" do
     it "fully replaces a document" do
-      request = Manticore::Client::InsertDocumentRequest.new(
+      request = ManticoreClient::Client::InsertDocumentRequest.new(
         table: table_name,
         id: 1,
         doc: { title: "Completely new", rating: 5.5 }
@@ -142,7 +142,7 @@ RSpec.describe "IndexApi" do
 
       result = index_api.replace(request)
 
-      expect(result).to be_a(Manticore::Client::SuccessResponse)
+      expect(result).to be_a(ManticoreClient::Client::SuccessResponse)
       expect(result).to have_attributes(
         table: table_name,
         id: 1,
@@ -158,7 +158,7 @@ RSpec.describe "IndexApi" do
   # Update a document in a table (by id).
   describe "#update" do
     it "updates a document by id" do
-      request = Manticore::Client::UpdateDocumentRequest.new(
+      request = ManticoreClient::Client::UpdateDocumentRequest.new(
         table: table_name,
         id: 1,
         doc: { rating: 4.2 }
@@ -166,7 +166,7 @@ RSpec.describe "IndexApi" do
 
       result = index_api.update(request)
 
-      expect(result).to be_a(Manticore::Client::UpdateResponse)
+      expect(result).to be_a(ManticoreClient::Client::UpdateResponse)
       expect(result).to have_attributes(
         table: table_name,
         result: "updated"

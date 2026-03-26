@@ -20,7 +20,7 @@ require 'faraday/multipart' if Gem::Version.new(Faraday::VERSION) >= Gem::Versio
 require 'marcel'
 
 
-module Manticore::Client
+module ManticoreClient::Client
   class ApiClient
     # The Configuration object holding settings to be used in the API client.
     attr_accessor :config
@@ -41,8 +41,10 @@ module Manticore::Client
       }
     end
 
+    DEFAULT_MUTEX = Mutex.new
+
     def self.default
-      @@default ||= ApiClient.new
+      DEFAULT_MUTEX.synchronize { @@default ||= ApiClient.new }
     end
 
     # Call an API with given options.
@@ -323,7 +325,7 @@ module Manticore::Client
         end
       else
         # models (e.g. Pet) or oneOf
-        klass = Manticore::Client.const_get(return_type)
+        klass = ManticoreClient::Client.const_get(return_type)
         klass.respond_to?(:openapi_one_of) ? klass.build(data) : klass.build_from_hash(data)
       end
     end

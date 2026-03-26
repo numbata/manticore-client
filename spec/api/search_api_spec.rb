@@ -5,8 +5,8 @@ require "spec_helper"
 RSpec.describe "SearchApi" do
   let(:table_name) { "#{TABLE_PREFIX}movies" }
   let(:percolate_table_name) { "#{TABLE_PREFIX}pq" }
-  let(:api_instance) { Manticore::Client::SearchApi.new }
-  let(:index_api) { Manticore::Client::IndexApi.new }
+  let(:api_instance) { ManticoreClient::Client::SearchApi.new }
+  let(:index_api) { ManticoreClient::Client::IndexApi.new }
 
   before do
     # Create a simple table for testing
@@ -24,9 +24,9 @@ RSpec.describe "SearchApi" do
     ManticoreSqlHelper.drop_table(table_name)
   end
 
-  describe "#autocomplete" do
+  describe "#autocomplete", :dev_only do
     it "returns suggestions for prefix" do
-      request = Manticore::Client::AutocompleteRequest.new(table: table_name, query: "Hel")
+      request = ManticoreClient::Client::AutocompleteRequest.new(table: table_name, query: "Hel")
       result = api_instance.autocomplete(request)
       suggestions = result.first[:data].map { |row| row[:query] }
       expect(suggestions).to include("hello", "helium")
@@ -35,7 +35,7 @@ RSpec.describe "SearchApi" do
 
   describe "#search" do
     it "returns matching documents" do
-      request = Manticore::Client::SearchRequest.new(table: table_name, query: { match: { title: "Hello" } })
+      request = ManticoreClient::Client::SearchRequest.new(table: table_name, query: { match: { title: "Hello" } })
       result = api_instance.search(request)
       expect(result.hits.total).to eq(1)
       expect(result.hits.hits.first._source[:title]).to eq("Hello world")
@@ -68,7 +68,7 @@ RSpec.describe "SearchApi" do
       document = { title: "Hello world high", rating: 9.0 }
 
       # Create a percolate request following the docs
-      request = Manticore::Client::PercolateRequest.new(
+      request = ManticoreClient::Client::PercolateRequest.new(
         query: {
           percolate: {
             document: document

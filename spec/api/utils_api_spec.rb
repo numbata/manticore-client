@@ -4,7 +4,7 @@ require "spec_helper"
 
 RSpec.describe "UtilsApi" do
   let(:table_name) { "#{TABLE_PREFIX}utils_test" }
-  let(:api_instance) { Manticore::Client::UtilsApi.new }
+  let(:api_instance) { ManticoreClient::Client::UtilsApi.new }
 
   before do
     # Create a test table
@@ -17,13 +17,12 @@ RSpec.describe "UtilsApi" do
 
     sql = "DROP TABLE #{table_name}"
     api_instance.sql("query=#{URI.encode_www_form_component(sql)}", query_params: { mode: "raw" })
-  rescue StandardError => e
-    puts "Warning: Could not drop table #{table_name}: #{e.message}"
+  rescue StandardError # rubocop:disable Lint/SuppressedException
   end
 
   describe "#sql" do
     it "creates an instance of UtilsApi" do
-      expect(api_instance).to be_instance_of(Manticore::Client::UtilsApi)
+      expect(api_instance).to be_instance_of(ManticoreClient::Client::UtilsApi)
     end
 
     it "executes INSERT statement" do
@@ -75,7 +74,7 @@ RSpec.describe "UtilsApi" do
 
       # The API should raise an exception
       expect { api_instance.sql("query=#{URI.encode_www_form_component(sql)}", query_params: { mode: "raw" }) }
-        .to raise_error(Manticore::Client::ApiError) do |error|
+        .to raise_error(ManticoreClient::Client::ApiError) do |error|
         expect(error.response_body).to include("error")
       end
     end

@@ -3,17 +3,79 @@ plugins:
   - rubocop-rake
 
 AllCops:
-  TargetRubyVersion: 2.7
+  TargetRubyVersion: 3.0
   NewCops: enable
   Exclude:
     - '**/templates/**/*'
     - '**/vendor/**/*'
-    - 'actionpack/lib/action_dispatch/journey/parser.rb'
+    - '.github/**/*'
     - 'lib/manticore/client/**/*'
 
 Naming/FileName:
   Exclude:
     - 'lib/manticore-client.rb'
+    - 'lib/manticore-rails.rb'
+
+Naming/AccessorMethodName:
+  Exclude:
+    - 'lib/manticore-rails/index.rb'
+    - 'lib/manticore-rails/index_builder.rb'
+
+Style/OneClassPerFile:
+  Enabled: false
+
+Style/Documentation:
+  Exclude:
+    - 'lib/manticore-rails/**/*'
+    - 'lib/manticore-rails.rb'
+    - 'lib/manticore/client.rb'
+    - 'lib/generators/**/*'
+    - 'lib/tasks/**/*'
+    - 'spec/support/**/*'
+
+Metrics/AbcSize:
+  Exclude:
+    - 'lib/manticore-rails/**/*'
+    - 'lib/tasks/**/*'
+
+Metrics/MethodLength:
+  Exclude:
+    - 'lib/manticore-rails/**/*'
+    - 'lib/tasks/**/*'
+
+Metrics/BlockLength:
+  Exclude:
+    - 'lib/tasks/**/*'
+
+Metrics/CyclomaticComplexity:
+  Exclude:
+    - 'lib/manticore-rails/**/*'
+
+Metrics/PerceivedComplexity:
+  Exclude:
+    - 'lib/manticore-rails/**/*'
+
+Metrics/ClassLength:
+  Exclude:
+    - 'lib/manticore-rails/**/*'
+
+RSpec/VerifiedDoubles:
+  Exclude:
+    - 'spec/rails/searchable_spec.rb'
+    - 'spec/rails/indexer_spec.rb'
+    - 'spec/rails/searcher_spec.rb'
+
+RSpec/SpecFilePathFormat:
+  Exclude:
+    - 'spec/rails/**/*'
+
+RSpec/MultipleDescribes:
+  Exclude:
+    - 'spec/rails/**/*'
+
+RSpec/NoExpectationExample:
+  Exclude:
+    - 'spec/rails/**/*'
 
 # Prefer &&/|| over and/or.
 Style/AndOr:

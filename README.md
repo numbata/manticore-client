@@ -1,136 +1,229 @@
-# manticore-client
+# Manticore Search for Ruby
 
 ![RubyGems Version](https://img.shields.io/gem/v/manticore-client)
-![CI Status](https://github.com/numbata/manticoresearch-ruby/actions/workflows/ci.yml/badge.svg)
+![CI Status](https://github.com/numbata/manticore-client/actions/workflows/ci.yml/badge.svg)
 
-A Ruby client for [Manticore Search](https://manticoresearch.com), generated from the OpenAPI specification.
+Ruby gems for [Manticore Search](https://manticoresearch.com):
 
-**API Version:** 5.0.0  •  **Gem Version:** 1.0.0  •  **Generator:** OpenAPI Generator v7.13.0
-
----
-
-## Table of Contents
-
-* [Installation](#installation)
-* [Usage](#usage)
-* [Configuration](#configuration)
-* [Documentation](#documentation)
-* [Development](#development)
-* [Contributing](#contributing)
-* [License](#license)
-
----
+| Gem | Purpose |
+|-----|---------|
+| **manticore-client** | HTTP client, auto-generated from the OpenAPI spec |
+| **manticore-rails** | ActiveRecord integration: index DSL, search, auto-indexing, rake tasks |
 
 ## Installation
 
-### From RubyGems
-
-Add to your `Gemfile`:
-
-```ruby
-gem 'manticore-client', '~> 1.0'
-```
-
-Then run:
-
-```bash
-bundle install
-```
-
-Or install directly:
-
-```bash
-gem install manticore-client
-```
-
-### From GitHub
-
 ```ruby
 # Gemfile
-gem 'manticore-client', git: 'https://github.com/numbata/manticore-client.git'
+
+# HTTP client only (no Rails dependency)
+gem "manticore-client", "~> 1.0"
+
+# Rails integration (pulls in manticore-client automatically)
+gem "manticore-rails", "~> 0.1"
 ```
 
-## Usage
+---
+
+## manticore-client
+
+Low-level HTTP client wrapping the Manticore Search API.
 
 ```ruby
-require 'manticore-client'
+require "manticore-client"
 
-# Optionally configure credentials or host
-Manticore::Client.configure do |config|
-  config.host = 'http://127.0.0.1:9308'
-  config.username = 'user'
-  config.password = 'pass'
+ManticoreClient::Client.configure do |config|
+  config.host = "http://127.0.0.1:9308"
 end
 
-# Create an API client instance
-client = Manticore::Client::IndexApi.new
+api = ManticoreClient::Client::IndexApi.new
 
-# Example: bulk operations
 body = <<~NDJSON
-  { "insert": { "index": "table_name", "id": 3, "doc": { "title": "New movie", "rating": 8.5 } } }
-  { "delete": { "index": "table_name", "id": 2 } }
+  {"insert": {"index": "products", "id": 1, "doc": {"title": "Ruby", "rating": 9.5}}}
+  {"insert": {"index": "products", "id": 2, "doc": {"title": "Python", "rating": 8.0}}}
 NDJSON
 
-begin
-  response = client.bulk(body)
-  puts response
-rescue Manticore::Client::ApiError => e
-  warn "API error: #{e.message} (status=#{e.code})"
-end
+api.bulk(body)
 ```
 
-## Configuration
-
-You can override default settings by calling `configure`. Available options:
-
 | Option     | Default                 | Description                           |
-| ---------- | ----------------------- | ------------------------------------- |
+|------------|-------------------------|---------------------------------------|
 | `host`     | `http://127.0.0.1:9308` | Base URL for the Manticore Search API |
 | `username` | *nil*                   | HTTP Basic auth username              |
 | `password` | *nil*                   | HTTP Basic auth password              |
 | `timeout`  | `60`                    | HTTP request timeout in seconds       |
 
-## Documentation
+Full API and model docs are in [docs/](docs/).
 
-Generated API and model documentation is available under the `docs/` directory:
+---
 
-* [API Endpoints](docs/IndexApi.md)
-* [Model Reference](docs/AggComposite.md)
+## manticore-rails
 
-Or browse online at [GitHub Pages](https://numbata.github.io/manticore-client).
+ActiveRecord integration with a ThinkingSphinx-style DSL.
+
+### Setup
+
+```ruby
+# config/initializers/manticore.rb
+
+ManticoreClient::Client.configure do |config|
+  config.host = ENV.fetch("MANTICORESEARCH_URI", "http://127.0.0.1:9308")
+end
+
+ManticoreRails.configure do |config|
+  config.index_prefix = Rails.env.test? ? "test" : nil
+  config.batch_size = 1000        # records per batch during reindex
+  config.auto_indexing = true     # after_commit callbacks
+  config.async_indexing = false   # set true + index_job_class for background
+  # config.index_job_class = "ManticoreIndexJob"
+end
+```
+
+### Defining indexes
+
+```ruby
+class Article < ApplicationRecord
+  include ManticoreRails::Searchable
+
+  define_manticore_index do
+    # Full-text fields
+    indexes :title
+    indexes :body
+    indexes tags.name, as: :tag_names    # has_many :tags
+    indexes author.name, as: :author_name # belongs_to :author
+
+    # Attributes (filterable, sortable)
+    has :id, type: :integer
+    has :status, type: :integer
+    has :published_at, type: :datetime
+    has :featured, type: :boolean
+
+    # Reindex when associated records change
+    reindex_on_change :tags
+
+    # Eager-load associations not used as fields but needed for manticore_serialize
+    includes :comments
+  end
+end
+```
+
+`indexes` declares full-text searchable fields. `has` declares attributes for filtering and sorting. Association fields use dot notation — values are collected and joined with spaces.
+
+#### Custom serialization
+
+Override `manticore_serialize` to control exactly what gets indexed. This is required when your index includes SQL placeholders or computed values:
+
+```ruby
+define_manticore_index do
+  indexes :title
+  indexes "(SELECT 1)", as: :summary  # SQL placeholder — value comes from serialize
+  has :id, type: :integer
+  has :published_at, type: :datetime
+end
+
+def manticore_serialize
+  {
+    "id" => id,
+    "title" => title,
+    "summary" => generate_summary,
+    "published_at" => published_at&.to_i || 0
+  }.compact
+end
+```
+
+When `manticore_serialize` is defined, it replaces the default field-walking serialization entirely.
+
+### Searching
+
+```ruby
+# Full-text search
+results = Article.search("ruby")
+
+# Filters
+results = Article.search("ruby", with: { status: 1 })
+results = Article.search("ruby", with: { status: [1, 2] })             # IN
+results = Article.search("", with: { published_at: 1.week.ago.to_i..Time.current.to_i }) # range
+results = Article.search("ruby", without: { status: 0 })               # exclusion
+
+# Sorting
+results = Article.search("ruby", order: { published_at: :desc })
+results = Article.search("ruby", order: "published_at DESC")
+
+# Pagination
+results = Article.search("ruby", page: 2, per_page: 20)
+results.total_entries  # => 156
+results.total_pages    # => 8
+results.current_page   # => 2
+
+# IDs only (skips model loading)
+ids = Article.search_for_ids("ruby", with: { status: 1 })
+
+# Facets — term counts per attribute field
+results = Article.search("ruby")
+counts = results.facets(:status, :featured)
+# => { status: { "1" => 42, "0" => 8 }, featured: { "true" => 12 } }
+```
+
+### Auto-indexing
+
+Records are indexed and removed automatically via `after_commit` callbacks when `auto_indexing` is enabled (the default). Disable temporarily for bulk operations:
+
+```ruby
+ManticoreRails.no_auto_indexing do
+  Article.insert_all(big_batch)
+end
+
+# Then reindex in bulk
+ManticoreRails::Indexer.new(Article.manticore_index).reindex_all
+```
+
+### Rake tasks
+
+```bash
+rake manticore:setup                     # drop + create + populate all indexes
+
+rake manticore:schema:create             # create tables
+rake manticore:schema:drop               # drop tables
+rake manticore:schema:rebuild            # drop + create
+
+rake manticore:index:rebuild             # reindex all
+rake manticore:index:rebuild[articles]   # reindex specific table
+```
+
+### Type mapping
+
+| Ruby type    | Manticore type |
+|-------------|----------------|
+| `:integer`  | `bigint`       |
+| `:datetime` | `timestamp`    |
+| `:boolean`  | `bool`         |
+| `:float`    | `float`        |
+| `:string`   | `string`       |
+| `:text`     | `text`         |
+| `:json`     | `json`         |
+
+---
 
 ## Development
 
-1. Fork and clone this repository
-2. Install dependencies:
+```bash
+bundle install
+bundle exec rspec              # all specs
+bundle exec rspec spec/rails/  # Rails layer only
+```
 
-   ```bash
-   bundle install
-   ```
-3. Run tests:
+### Regenerating the HTTP client
 
-   ```bash
-   bundle exec rspec
-   ```
-4. Regenerate client after schema changes:
-
-   ```bash
-   openapi-generator-cli generate \
-     -i https://raw.githubusercontent.com/manticoresoftware/openapi/master/manticore.yml \
-     -g ruby \
-     -o ./ \
-     --skip-overwrite \
-     --additional-properties=\
-       library=faraday,\
-       gemName=manticore/client,\
-       moduleName=Manticore::Client,\
-       useAutoload=true
-   ```
+```bash
+openapi-generator-cli generate \
+  -i https://raw.githubusercontent.com/manticoresoftware/openapi/master/manticore.yml \
+  -g ruby -o ./ --skip-overwrite \
+  --additional-properties=library=faraday,gemName=manticore/client,moduleName=ManticoreClient::Client,useAutoload=true
+```
 
 ## Contributing
 
-Contributions are welcome! Please open issues and pull requests against `main`. Ensure your code passes lint and tests before submitting.
+Contributions welcome. Open issues and pull requests against `main`.
 
 ## License
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+MIT. See [LICENSE.txt](LICENSE.txt).
