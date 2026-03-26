@@ -70,7 +70,7 @@ ManticoreClient::Client.configure do |config|
 end
 
 ManticoreRails.configure do |config|
-  config.index_prefix = Rails.env.test? ? "test_" : nil
+  config.index_prefix = Rails.env.test? ? "test" : nil
   config.batch_size = 1000        # records per batch during reindex
   config.auto_indexing = true     # after_commit callbacks
   config.async_indexing = false   # set true + index_job_class for background
@@ -99,6 +99,9 @@ class Article < ApplicationRecord
 
     # Reindex when associated records change
     reindex_on_change :tags
+
+    # Eager-load associations not used as fields but needed for manticore_serialize
+    includes :comments
   end
 end
 ```
@@ -139,6 +142,7 @@ results = Article.search("ruby")
 results = Article.search("ruby", with: { status: 1 })
 results = Article.search("ruby", with: { status: [1, 2] })             # IN
 results = Article.search("", with: { published_at: 1.week.ago.to_i..Time.current.to_i }) # range
+results = Article.search("ruby", without: { status: 0 })               # exclusion
 
 # Sorting
 results = Article.search("ruby", order: { published_at: :desc })
@@ -152,6 +156,11 @@ results.current_page   # => 2
 
 # IDs only (skips model loading)
 ids = Article.search_for_ids("ruby", with: { status: 1 })
+
+# Facets — term counts per attribute field
+results = Article.search("ruby")
+counts = results.facets(:status, :featured)
+# => { status: { "1" => 42, "0" => 8 }, featured: { "true" => 12 } }
 ```
 
 ### Auto-indexing

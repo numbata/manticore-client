@@ -29,7 +29,7 @@ ManticoreClient::Client.configure do |config|
 end
 
 ManticoreRails.configure do |config|
-  config.index_prefix = Rails.env.test? ? "test_" : nil
+  config.index_prefix = Rails.env.test? ? "test" : nil
   config.batch_size = 1000
   config.auto_indexing = true
   config.async_indexing = false
@@ -82,6 +82,9 @@ define_manticore_index do
 
   # Reindex parent record when associated records change
   reindex_on_change :tags
+
+  # Eager-load associations not used as fields but needed for manticore_serialize
+  includes :comments
 end
 ```
 
@@ -142,6 +145,11 @@ results.previous_page  # => 1
 
 # IDs only (skips model loading)
 Article.search_for_ids("ruby", with: { status: 1 })
+
+# Facets — term counts per attribute field
+results = Article.search("ruby")
+counts = results.facets(:status, :featured)
+# => { status: { "1" => 42, "0" => 8 }, featured: { "true" => 12 } }
 ```
 
 ## Auto-indexing
@@ -265,7 +273,7 @@ ManticoreRails.circuit_open?  # => true/false
 
 ```ruby
 ManticoreRails.configure do |config|
-  config.index_prefix              = nil    # prefix for table names (e.g. "test_")
+  config.index_prefix              = nil    # prefix for table names (e.g. "test" → "test_articles")
   config.batch_size                = 1000   # records per batch during reindex
   config.auto_indexing             = true   # after_commit index/remove callbacks
   config.async_indexing            = false  # delegate indexing to a background job
