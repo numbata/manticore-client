@@ -1,15 +1,15 @@
 PATH
   remote: .
   specs:
-    manticore-client (1.0.0)
+    manticore-client (2.0.0)
       faraday (>= 1.0.1, < 3.0)
       faraday-multipart
       marcel
       zeitwerk
-    manticore-rails (0.1.0)
+    manticore-rails (2.0.0)
       activerecord (>= 6.0)
       activesupport (>= 6.0)
-      manticore-client (~> 1.0)
+      manticore-client (~> 2.0)
       zeitwerk
 
 GEM

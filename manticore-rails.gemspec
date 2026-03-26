@@ -23,7 +23,7 @@ Gem::Specification.new do |spec|
 
   spec.add_dependency "activerecord", ">= 6.0"
   spec.add_dependency "activesupport", ">= 6.0"
-  spec.add_dependency "manticore-client", "~> 1.0"
+  spec.add_dependency "manticore-client", "~> 2.0"
   spec.add_dependency "zeitwerk"
 
   spec.files = %w[LICENSE.txt README-rails.md] + Dir.glob("lib/manticore-rails.rb") +
