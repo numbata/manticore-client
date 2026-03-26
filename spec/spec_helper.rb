@@ -87,26 +87,17 @@ RSpec.configure do |config|
   Kernel.srand config.seed
 end
 
-# Helper method to check if docs exist in a table
-# This matcher checks if the table contains the expected documents
-# It queries the table and compares the results with the expected documents
-# If the table does not exist or if there are no matching documents, it raises an error
-# Usage:
-# expect(TABLE_PREFIX + "movies").to have_docs(
-#   { id: 1, title: "Scary movie", rating: 9.5 },
-#   { id: 3, title: "New movie", rating: 8.5 }
-# )
 RSpec::Matchers.define :have_docs do |expected|
   match do |actual|
-    result = ManticoreSqlHelper.query("SELECT * FROM #{actual}")
-    result.any? { |row| row >= expected }
+    @rows = ManticoreSqlHelper.query("SELECT * FROM #{actual}")
+    @rows.any? { |row| row >= expected }
   end
 
   failure_message do |actual|
-    "expected that table #{actual} would have #{expected} rows, but it has #{actual.count}"
+    "expected table #{actual} to have a row matching #{expected.inspect}, got: #{@rows.inspect}"
   end
 
   failure_message_when_negated do |actual|
-    "expected that table #{actual} would not have #{expected} rows, but it does"
+    "expected table #{actual} not to have a row matching #{expected.inspect}, but it does"
   end
 end

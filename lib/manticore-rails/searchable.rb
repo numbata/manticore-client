@@ -73,12 +73,15 @@ module ManticoreRails
             inverse_name = inverse.name
 
             reflection.klass.class_eval do
-              after_commit(on: %i[create update destroy]) do
-                result = send(inverse_name)
-                if result.respond_to?(:find_each)
-                  result.find_each { |r| r.manticore_index_record if r.respond_to?(:manticore_index_record) }
-                elsif result.respond_to?(:manticore_index_record)
-                  result.manticore_index_record
+              @manticore_reindex_callbacks ||= Set.new
+              if @manticore_reindex_callbacks.add?(inverse_name)
+                after_commit(on: %i[create update destroy]) do
+                  result = send(inverse_name)
+                  if result.respond_to?(:find_each)
+                    result.find_each { |r| r.manticore_index_record if r.respond_to?(:manticore_index_record) }
+                  elsif result.respond_to?(:manticore_index_record)
+                    result.manticore_index_record
+                  end
                 end
               end
             end

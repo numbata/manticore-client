@@ -169,7 +169,7 @@ module ManticoreRails
       end
 
       def index_api
-        @index_api ||= ManticoreClient::Client::IndexApi.new
+        ManticoreClient::Client::IndexApi.new
       end
   end
 end
